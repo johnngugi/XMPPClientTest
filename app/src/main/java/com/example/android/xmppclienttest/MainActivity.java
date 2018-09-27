@@ -10,6 +10,8 @@ import android.view.MenuItem;
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
 
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     private AppDatabase mDb;
@@ -36,7 +38,22 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mAdapter.setmMessages(mDb.messageDao().loadAllMessages());
+        retreiveMessages();
+    }
+
+    private void retreiveMessages() {
+        AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                final List<MessageEntry> messageEntries = mDb.messageDao().loadAllMessages();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mAdapter.setmMessages(messageEntries);
+                    }
+                });
+            }
+        });
     }
 
     @Override
@@ -54,24 +71,36 @@ public class MainActivity extends AppCompatActivity {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
                 insertMessage();
+                retreiveMessages();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
-                deleteAllMessages();
+                deleteMessages();
+                retreiveMessages();
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
     private void insertMessage() {
-        String title = "Test";
-        String description = "Lorem ipsum dolor sit amet";
+        final String title = "Test";
+        final String description = "Lorem ipsum dolor sit amet";
+        final MessageEntry message = new MessageEntry(title, description);
 
-        MessageEntry message = new MessageEntry(title, description);
-        mDb.messageDao().insertSingleMessage(message);
+        AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                mDb.messageDao().insertSingleMessage(message);
+            }
+        });
     }
 
-    private void deleteAllMessages() {
-
+    private void deleteMessages() {
+        AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                mDb.messageDao().deleteAllMessages();
+            }
+        });
     }
 }
