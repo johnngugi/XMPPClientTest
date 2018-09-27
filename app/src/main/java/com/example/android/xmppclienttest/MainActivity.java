@@ -1,6 +1,9 @@
 package com.example.android.xmppclienttest;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -33,25 +36,15 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(mAdapter);
 
         mDb = AppDatabase.getInstance(getApplicationContext());
+        setupViewModel();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        retreiveMessages();
-    }
-
-    private void retreiveMessages() {
-        AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
+    private void setupViewModel() {
+        MainViewModel viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        viewModel.getMessages().observe(this, new Observer<List<MessageEntry>>() {
             @Override
-            public void run() {
-                final List<MessageEntry> messageEntries = mDb.messageDao().loadAllMessages();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mAdapter.setmMessages(messageEntries);
-                    }
-                });
+            public void onChanged(@Nullable List<MessageEntry> messageEntries) {
+                mAdapter.setmMessages(messageEntries);
             }
         });
     }
@@ -71,12 +64,10 @@ public class MainActivity extends AppCompatActivity {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
                 insertMessage();
-                retreiveMessages();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
                 deleteMessages();
-                retreiveMessages();
                 return true;
         }
         return super.onOptionsItemSelected(item);

@@ -1,5 +1,6 @@
 package com.example.android.xmppclienttest.database;
 
+import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
@@ -13,10 +14,10 @@ import java.util.List;
 public interface MessageDao {
 
     @Query("SELECT * FROM message")
-    List<MessageEntry> loadAllMessages();
+    LiveData<List<MessageEntry>> loadAllMessages();
 
     @Query("SELECT * FROM message WHERE id = :id")
-    MessageEntry loadMessageById(int id);
+    LiveData<MessageEntry> loadMessageById(int id);
 
     @Insert
     void insertSingleMessage(MessageEntry message);
