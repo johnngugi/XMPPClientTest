@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">XMPPClientTest</string>
+    <string name="action_insert_dummy_data">Insert Dummy Data</string>
+    <string name="action_delete_all_entries">Delete All Entries</string>
 </resources>
