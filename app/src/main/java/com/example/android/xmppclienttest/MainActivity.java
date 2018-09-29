@@ -12,6 +12,7 @@ import android.view.MenuItem;
 
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
+import com.example.android.xmppclienttest.util.BroadcastClientTest;
 
 import java.util.List;
 
@@ -37,6 +38,15 @@ public class MainActivity extends AppCompatActivity {
 
         mDb = AppDatabase.getInstance(getApplicationContext());
         setupViewModel();
+
+        final BroadcastClientTest clientTest = new BroadcastClientTest(mDb);
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                clientTest.broadCast();
+            }
+        });
+        thread.start();
     }
 
     private void setupViewModel() {
