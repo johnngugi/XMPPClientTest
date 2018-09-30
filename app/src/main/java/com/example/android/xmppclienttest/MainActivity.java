@@ -12,7 +12,7 @@ import android.view.MenuItem;
 
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
-import com.example.android.xmppclienttest.util.BroadcastClientTest;
+import com.example.android.xmppclienttest.sync.BroadcastClientTest;
 
 import java.util.List;
 
