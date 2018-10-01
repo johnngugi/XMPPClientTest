@@ -2,6 +2,7 @@ package com.example.android.xmppclienttest;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -12,7 +13,8 @@ import android.view.MenuItem;
 
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
-import com.example.android.xmppclienttest.util.BroadcastClientTest;
+import com.example.android.xmppclienttest.sync.BroadcastClientTest;
+import com.example.android.xmppclienttest.sync.ConnectionService;
 
 import java.util.List;
 
@@ -39,14 +41,16 @@ public class MainActivity extends AppCompatActivity {
         mDb = AppDatabase.getInstance(getApplicationContext());
         setupViewModel();
 
-        final BroadcastClientTest clientTest = new BroadcastClientTest(mDb);
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                clientTest.broadCast();
-            }
-        });
-        thread.start();
+//        final BroadcastClientTest clientTest = new BroadcastClientTest(mDb);
+//        Thread thread = new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                clientTest.broadCast();
+//            }
+//        });
+//        thread.start();
+        Intent backgroundService = new Intent(this, ConnectionService.class);
+        startService(backgroundService);
     }
 
     private void setupViewModel() {
