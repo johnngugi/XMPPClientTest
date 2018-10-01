@@ -13,8 +13,9 @@ import android.view.MenuItem;
 
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
-import com.example.android.xmppclienttest.sync.BroadcastClientTest;
 import com.example.android.xmppclienttest.sync.ConnectionService;
+import com.example.android.xmppclienttest.sync.NewEventIntentService;
+import com.example.android.xmppclienttest.sync.Tasks;
 
 import java.util.List;
 
@@ -51,6 +52,10 @@ public class MainActivity extends AppCompatActivity {
 //        thread.start();
         Intent backgroundService = new Intent(this, ConnectionService.class);
         startService(backgroundService);
+
+        Intent eventNotificationIntent = new Intent(this, NewEventIntentService.class);
+        eventNotificationIntent.setAction(Tasks.ACTION_NEW_EVENT);
+        startService(eventNotificationIntent);
     }
 
     private void setupViewModel() {

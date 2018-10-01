@@ -8,6 +8,7 @@ import com.example.android.xmppclienttest.sync.ConnectionService;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.ReconnectionManager;
+import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
@@ -52,6 +53,8 @@ public class CustomConnection implements ConnectionListener {
 
     public void connect() throws InterruptedException, XMPPException, SmackException, IOException {
         Log.d(TAG, "Connecting to server " + mServiceName);
+        // TODO: Remove debug when testing is finished
+        SmackConfiguration.DEBUG = true;
         XMPPTCPConnectionConfiguration configuration = XMPPTCPConnectionConfiguration.builder()
                 .setUsernameAndPassword(mUsername, mPassword)
                 .setXmppDomain("strathmore-computer")
@@ -105,5 +108,9 @@ public class CustomConnection implements ConnectionListener {
     public void connectionClosedOnError(Exception e) {
         ConnectionService.sConnectionState = ConnectionState.DISCONNECTED;
         Log.d(TAG, "ConnectionClosedOnError, error " + e.toString());
+    }
+
+    public XMPPTCPConnection getXmppTcpConnection() {
+        return mConnection;
     }
 }
