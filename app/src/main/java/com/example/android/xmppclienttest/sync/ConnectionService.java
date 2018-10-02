@@ -17,9 +17,11 @@ import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubException;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
+import org.jivesoftware.smackx.pubsub.Subscription;
 import org.jivesoftware.smackx.pubsub.listener.ItemEventListener;
 
 import java.io.IOException;
+import java.util.List;
 
 public class ConnectionService extends Service {
 
@@ -107,7 +109,6 @@ public class ConnectionService extends Service {
         }
         try {
             mConnection.connect();
-            receivePublished(mConnection.getXmppTcpConnection());
         } catch (IOException | SmackException | XMPPException | InterruptedException e) {
             Log.d(TAG, "Something went wrong while connecting, make sure the credentials are right and try again");
             e.printStackTrace();
@@ -126,7 +127,10 @@ public class ConnectionService extends Service {
 
         LeafNode eventNode = pubSubManager.getNode("testNode");
         eventNode.addItemEventListener(eventListener);
-        eventNode.subscribe(String.valueOf(connection.getUser()));
+        List<Subscription> subscriptions = eventNode.getSubscriptions();
+        if (subscriptions == null) {
+            eventNode.subscribe(String.valueOf(connection.getUser()));
+        }
     }
 
     public static CustomConnection.ConnectionState getState() {
@@ -151,7 +155,6 @@ public class ConnectionService extends Service {
             for (Object obj : items.getItems()) {
                 PayloadItem item = (PayloadItem) obj;
                 System.out.println("Payload: " + item.getPayload().toString());
-                Log.d(TAG, "Payload: " + item.getPayload().toString());
                 Tasks.executeTask(getApplicationContext(), Tasks.ACTION_NEW_EVENT);
             }
         }

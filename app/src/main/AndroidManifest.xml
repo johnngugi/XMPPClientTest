@@ -31,6 +31,10 @@
             android:name=".sync.NewEventIntentService"
             android:exported="false" />
 
+        <service
+            android:name=".sync.EventsFirebaseJobService"
+            android:exported="false" />
+
     </application>
 
 </manifest>
