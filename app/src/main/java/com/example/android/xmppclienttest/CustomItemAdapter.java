@@ -53,7 +53,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.It
         return mMessages.size();
     }
 
-    public void setmMessages(List<MessageEntry> messages) {
+    public void setMessages(List<MessageEntry> messages) {
         mMessages = messages;
         notifyDataSetChanged();
     }

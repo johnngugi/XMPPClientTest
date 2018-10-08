@@ -3,6 +3,7 @@ package com.example.android.xmppclienttest.sync;
 import android.content.Context;
 import android.os.AsyncTask;
 
+import com.example.android.xmppclienttest.util.CustomConnection;
 import com.firebase.jobdispatcher.JobParameters;
 import com.firebase.jobdispatcher.JobService;
 
@@ -14,14 +15,13 @@ public class EventsFirebaseJobService extends JobService {
 
     @Override
     public boolean onStartJob(final JobParameters job) {
-        final XMPPTCPConnection connection = (XMPPTCPConnection) job.getExtras().get("Connection");
 
         mFetchEventsTask = new AsyncTask<XMPPTCPConnection, Void, Void>() {
 
             @Override
-            protected Void doInBackground(XMPPTCPConnection... xmpptcpConnections) {
+            protected Void doInBackground(XMPPTCPConnection... customConnections) {
                 Context context = getApplicationContext();
-                Tasks.getEvent(context, xmpptcpConnections[0]);
+                Tasks.getEvent(context, customConnections[0]);
                 jobFinished(job, false);
                 return null;
             }
@@ -32,7 +32,7 @@ public class EventsFirebaseJobService extends JobService {
             }
         };
 
-        mFetchEventsTask.execute(connection);
+        mFetchEventsTask.execute(CustomConnection.connection);
         return true;
     }
 

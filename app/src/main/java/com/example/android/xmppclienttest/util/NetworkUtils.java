@@ -41,7 +41,6 @@ public class NetworkUtils {
                         String payloadTitle = item.getId();
                         String payloadMessage = item.getPayload().toString();
                         events.add(new MessageEntry(payloadTitle, payloadMessage));
-                        System.out.println("Payload: " + item.getPayload().toString());
                     }
                 }
             });

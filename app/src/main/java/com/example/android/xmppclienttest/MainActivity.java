@@ -2,6 +2,7 @@ package com.example.android.xmppclienttest;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -14,8 +15,7 @@ import android.view.MenuItem;
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
 import com.example.android.xmppclienttest.sync.ConnectionService;
-import com.example.android.xmppclienttest.sync.NewEventIntentService;
-import com.example.android.xmppclienttest.sync.Tasks;
+import com.example.android.xmppclienttest.sync.EventSyncUtils;
 
 import java.util.List;
 
@@ -24,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private AppDatabase mDb;
 
     private CustomItemAdapter mAdapter;
+    private BroadcastReceiver mBroadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,12 +51,15 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        });
 //        thread.start();
+
         Intent backgroundService = new Intent(this, ConnectionService.class);
         startService(backgroundService);
+//
+//        Intent eventNotificationIntent = new Intent(this, NewEventIntentService.class);
+//        eventNotificationIntent.setAction(Tasks.ACTION_NEW_EVENT);
+//        startService(eventNotificationIntent);
 
-        Intent eventNotificationIntent = new Intent(this, NewEventIntentService.class);
-        eventNotificationIntent.setAction(Tasks.ACTION_NEW_EVENT);
-        startService(eventNotificationIntent);
+//        EventSyncUtils.initialize(getApplicationContext(), ConnectionService.mConnection);
     }
 
     private void setupViewModel() {
@@ -63,9 +67,37 @@ public class MainActivity extends AppCompatActivity {
         viewModel.getMessages().observe(this, new Observer<List<MessageEntry>>() {
             @Override
             public void onChanged(@Nullable List<MessageEntry> messageEntries) {
-                mAdapter.setmMessages(messageEntries);
+                mAdapter.setMessages(messageEntries);
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+//        mBroadcastReceiver = new BroadcastReceiver() {
+//            @Override
+//            public void onReceive(Context context, Intent intent) {
+//                String action = intent.getAction();
+//                switch (action) {
+//                    case ConnectionService.NEW_EVENT:
+//                        String from = intent.getStringExtra(ConnectionService.BUNDLE_FROM_JID);
+//                        String body = intent.getStringExtra(ConnectionService.BUNDLE_MESSAGE_BODY);
+//
+//                        return;
+//                }
+//
+//            }
+//        };
+
+//        IntentFilter filter = new IntentFilter(ConnectionService.NEW_EVENT);
+//        registerReceiver(mBroadcastReceiver,filter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+//        unregisterReceiver(mBroadcastReceiver);
     }
 
     @Override
