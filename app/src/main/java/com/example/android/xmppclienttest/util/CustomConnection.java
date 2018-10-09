@@ -13,7 +13,6 @@ import com.example.android.xmppclienttest.sync.Tasks;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.ReconnectionManager;
-import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
@@ -71,7 +70,7 @@ public class CustomConnection implements ConnectionListener {
     public void connect() throws InterruptedException, XMPPException, SmackException, IOException {
         Log.d(TAG, "Connecting to server " + mServiceName);
         // TODO: Remove debug when testing is finished
-        SmackConfiguration.DEBUG = true;
+//        SmackConfiguration.DEBUG = true;
         XMPPTCPConnectionConfiguration configuration = XMPPTCPConnectionConfiguration.builder()
                 .setUsernameAndPassword(mUsername, mPassword)
                 .setXmppDomain("strathmore-computer")
@@ -136,11 +135,18 @@ public class CustomConnection implements ConnectionListener {
                 PubSubManager pubSubManager = PubSubManager.getInstance(connection);
                 LeafNode eventNode = pubSubManager.getNode("testNode");
                 eventNode.addItemEventListener(new PublishItemEventListener());
-                eventNode.subscribe(String.valueOf(connection.getUser()));
-//                List<Subscription> subscriptions = eventNode.getSubscriptions();
-//                if (subscriptions == null) {
-//                    eventNode.subscribe(String.valueOf(connection.getUser()));
-//                }
+                List<Subscription> subscriptions = eventNode.getSubscriptions();
+                if (subscriptions.size() == 0) {
+                    eventNode.subscribe(String.valueOf(connection.getUser()));
+                } else {
+                    for (Subscription subscription : subscriptions) {
+                        Subscription.State state = subscription.getState();
+                        System.out.println(subscription.toXML("pubsub:test:test").toString());
+                        if (state != Subscription.State.subscribed) {
+                            eventNode.subscribe(String.valueOf(connection.getUser()));
+                        }
+                    }
+                }
             }
         } catch (InterruptedException | XMPPException | SmackException e) {
             e.printStackTrace();
