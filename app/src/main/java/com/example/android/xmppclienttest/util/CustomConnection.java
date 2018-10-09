@@ -25,6 +25,7 @@ import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
 import org.jivesoftware.smackx.pubsub.Subscription;
 import org.jivesoftware.smackx.pubsub.listener.ItemEventListener;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -135,10 +136,11 @@ public class CustomConnection implements ConnectionListener {
                 PubSubManager pubSubManager = PubSubManager.getInstance(connection);
                 LeafNode eventNode = pubSubManager.getNode("testNode");
                 eventNode.addItemEventListener(new PublishItemEventListener());
-                List<Subscription> subscriptions = eventNode.getSubscriptions();
-                if (subscriptions == null) {
-                    eventNode.subscribe(String.valueOf(connection.getUser()));
-                }
+                eventNode.subscribe(String.valueOf(connection.getUser()));
+//                List<Subscription> subscriptions = eventNode.getSubscriptions();
+//                if (subscriptions == null) {
+//                    eventNode.subscribe(String.valueOf(connection.getUser()));
+//                }
             }
         } catch (InterruptedException | XMPPException | SmackException e) {
             e.printStackTrace();
@@ -174,6 +176,7 @@ public class CustomConnection implements ConnectionListener {
     }
 
     private class PublishItemEventListener implements ItemEventListener {
+        MessageParser parser = new MessageParser();
 
         @Override
         public void handlePublishedItems(ItemPublishEvent items) {
@@ -181,9 +184,15 @@ public class CustomConnection implements ConnectionListener {
             for (Object obj : items.getItems()) {
                 PayloadItem item = (PayloadItem) obj;
                 String payloadTitle = item.getId();
-                String payloadMessage = item.getPayload().toString();
-                Tasks.addEvent(mApplicationContext, new MessageEntry(payloadTitle, payloadMessage));
-                System.out.println(payloadMessage);
+                String payloadMessage = parser.retreiveXmlString(item.getPayload().toString());
+                System.out.println("Payload message: " + payloadMessage);
+                try {
+                    String parsedMessage = parser.parseTest(payloadMessage);
+                    Tasks.addEvent(mApplicationContext, new MessageEntry(payloadTitle, parsedMessage));
+                    System.out.println("Parsed message: " + parsedMessage);
+                } catch (XmlPullParserException | IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

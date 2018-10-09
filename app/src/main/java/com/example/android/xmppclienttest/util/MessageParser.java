@@ -8,58 +8,40 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MessageParser {
 
     private static final String ns = "pubsub:test:test";
 
-    public List parse(String rawXml) throws XmlPullParserException, IOException {
+    public String retreiveXmlString(String message) {
+        int firstTagPosition = message.indexOf('<');
+        int lastTagPosition = message.lastIndexOf('>');
+
+        return message.substring(firstTagPosition, lastTagPosition + 1);
+    }
+
+    public String parseTest(String rawXml) throws XmlPullParserException, IOException {
         InputStream stream = new ByteArrayInputStream(rawXml.getBytes());
 
         try {
             XmlPullParser parser = Xml.newPullParser();
-            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
             parser.setInput(stream, null);
             parser.nextTag();
-            return readFeed(parser);
+            return readMessage(parser);
         } finally {
             stream.close();
         }
     }
 
-    private List readFeed(XmlPullParser parser) throws IOException, XmlPullParserException {
-        List entries = new ArrayList();
-
-        parser.require(XmlPullParser.START_TAG, ns, "feed");
-        while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }
-            String name = parser.getName();
-            if (name.equals("message")) {
-                entries.add(readEntry(parser));
-            } else {
-                skip(parser);
-            }
-        }
-
-        return entries;
-    }
-
-    private Object readEntry(XmlPullParser parser) throws IOException, XmlPullParserException {
-        String body = null;
-        while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }
-            String name = parser.getName();
-            if (name.equals("body")) {
-                body = readBody(parser);
-            }
-        }
-        return null;
+    private String readMessage(XmlPullParser parser) throws IOException, XmlPullParserException {
+        String message = null;
+        parser.require(XmlPullParser.START_TAG, ns, "message");
+        parser.next();
+        message = readBody(parser);
+        parser.next();
+        parser.require(XmlPullParser.END_TAG, ns, "message");
+        return message;
     }
 
     private String readBody(XmlPullParser parser) throws IOException, XmlPullParserException {
@@ -78,8 +60,21 @@ public class MessageParser {
         return result;
     }
 
-    private void skip(XmlPullParser parser) {
-
+    private void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
+        if (parser.getEventType() != XmlPullParser.START_TAG) {
+            throw new IllegalStateException();
+        }
+        int depth = 1;
+        while (depth != 0) {
+            switch (parser.next()) {
+                case XmlPullParser.END_TAG:
+                    depth--;
+                    break;
+                case XmlPullParser.START_TAG:
+                    depth++;
+                    break;
+            }
+        }
     }
 
 }

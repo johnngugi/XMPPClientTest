@@ -27,7 +27,7 @@ public class ConnectionService extends Service {
     public static CustomConnection.LoggedInState sLoggedInState;
     public static CustomConnection mConnection;
 
-    public static final String HOST_ADDRESS = "10.51.18.96";
+    public static final String HOST_ADDRESS = "10.51.5.188";
 
     private boolean mActive;//Stores whether or not the thread is active
     private Thread mThread;
