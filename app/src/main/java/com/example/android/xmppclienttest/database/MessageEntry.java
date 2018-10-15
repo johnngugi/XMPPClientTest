@@ -9,39 +9,39 @@ public class MessageEntry {
 
     @PrimaryKey(autoGenerate = true)
     private int id;
-    private String title;
-    private String description;
+    private String subject;
+    private String body;
 
     @Ignore
-    public MessageEntry(String title, String description) {
-        this.title = title;
-        this.description = description;
+    public MessageEntry(String subject, String body) {
+        this.subject = subject;
+        this.body = body;
     }
 
-    public MessageEntry(int id, String title, String description) {
+    public MessageEntry(int id, String subject, String body) {
         this.id = id;
-        this.title = title;
-        this.description = description;
+        this.subject = subject;
+        this.body = body;
     }
 
     public int getId() {
         return id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getSubject() {
+        return subject;
     }
 
-    public String getDescription() {
-        return description;
+    public String getBody() {
+        return body;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setSubject(String subject) {
+        this.subject = subject;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setBody(String body) {
+        this.body = body;
     }
     
 }

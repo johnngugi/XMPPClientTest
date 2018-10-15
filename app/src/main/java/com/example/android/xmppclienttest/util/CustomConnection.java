@@ -13,6 +13,7 @@ import com.example.android.xmppclienttest.sync.Tasks;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.ReconnectionManager;
+import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
@@ -24,6 +25,8 @@ import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
 import org.jivesoftware.smackx.pubsub.Subscription;
 import org.jivesoftware.smackx.pubsub.listener.ItemEventListener;
+import org.jxmpp.jid.EntityFullJid;
+import org.jxmpp.jid.Jid;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
@@ -70,7 +73,7 @@ public class CustomConnection implements ConnectionListener {
     public void connect() throws InterruptedException, XMPPException, SmackException, IOException {
         Log.d(TAG, "Connecting to server " + mServiceName);
         // TODO: Remove debug when testing is finished
-//        SmackConfiguration.DEBUG = true;
+        SmackConfiguration.DEBUG = true;
         XMPPTCPConnectionConfiguration configuration = XMPPTCPConnectionConfiguration.builder()
                 .setUsernameAndPassword(mUsername, mPassword)
                 .setXmppDomain("strathmore-computer")
@@ -140,10 +143,12 @@ public class CustomConnection implements ConnectionListener {
                     eventNode.subscribe(String.valueOf(connection.getUser()));
                 } else {
                     for (Subscription subscription : subscriptions) {
+                        System.out.println(subscription.toXML(""));
+                        Jid jid = subscription.getJid();
+                        EntityFullJid userJid = connection.getUser();
                         Subscription.State state = subscription.getState();
-                        System.out.println(subscription.toXML("pubsub:test:test").toString());
-                        if (state != Subscription.State.subscribed) {
-                            eventNode.subscribe(String.valueOf(connection.getUser()));
+                        if (userJid == jid && state != Subscription.State.subscribed) {
+                            eventNode.subscribe(String.valueOf(userJid));
                         }
                     }
                 }
@@ -189,13 +194,12 @@ public class CustomConnection implements ConnectionListener {
             Log.d(TAG, "event published");
             for (Object obj : items.getItems()) {
                 PayloadItem item = (PayloadItem) obj;
-                String payloadTitle = item.getId();
                 String payloadMessage = parser.retreiveXmlString(item.getPayload().toString());
                 System.out.println("Payload message: " + payloadMessage);
                 try {
-                    String parsedMessage = parser.parseTest(payloadMessage);
-                    Tasks.addEvent(mApplicationContext, new MessageEntry(payloadTitle, parsedMessage));
-                    System.out.println("Parsed message: " + parsedMessage);
+                    MessageEntry messageEntry = parser.parseTest(payloadMessage);
+                    Tasks.addEvent(mApplicationContext, messageEntry);
+                    System.out.println("Parsed message: " + messageEntry.getBody());
                 } catch (XmlPullParserException | IOException e) {
                     e.printStackTrace();
                 }

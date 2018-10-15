@@ -38,11 +38,11 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.It
     public void onBindViewHolder(
             @NonNull ItemViewHolder numberViewHolder, int position) {
         MessageEntry messageEntry = mMessages.get(position);
-        String title = messageEntry.getTitle();
-        String description = messageEntry.getDescription();
+        String subject = messageEntry.getSubject();
+        String body = messageEntry.getBody();
 
-        numberViewHolder.mItemTitle.setText(title);
-        numberViewHolder.mItemDescription.setText(description);
+        numberViewHolder.mItemTitle.setText(subject);
+        numberViewHolder.mItemDescription.setText(body);
     }
 
     @Override
