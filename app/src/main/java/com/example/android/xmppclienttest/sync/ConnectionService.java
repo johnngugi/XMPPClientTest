@@ -16,26 +16,19 @@ import java.io.IOException;
 
 public class ConnectionService extends Service {
 
-    public static final String NEW_EVENT = "com.example.android.new-event";
-    public static final String BUNDLE_FROM_JID = "bundle_from";
-    public static final String BUNDLE_MESSAGE_BODY = "bundle_body";
-    public static final String SEND_EVENT = "com.example.android.send-event";
-    public static final String BUNDLE_TO = "bundle-to";
     private static final String TAG = ConnectionService.class.getSimpleName();
+    private static final Object LOCK = new Object();
 
     public static CustomConnection.ConnectionState sConnectionState;
     public static CustomConnection.LoggedInState sLoggedInState;
     public static CustomConnection mConnection;
 
-    public static final String HOST_ADDRESS = "10.50.4.141";
+    public static final String HOST_ADDRESS = "10.51.5.188";
 
     private boolean mActive;//Stores whether or not the thread is active
     private Thread mThread;
     private Handler mTHandler;//We use this handler to post messages to
     //the background thread.
-
-    public static final String UI_AUTHENTICATED =
-            "com.example.android.xmppclienttest.uiauthenticated";
 
     @Override
     public void onCreate() {
@@ -62,7 +55,7 @@ public class ConnectionService extends Service {
         stop();
     }
 
-    public void start() {
+    private void start() {
         Log.d(TAG, " Service Start() function called.");
         if (!mActive) {
             mActive = true;
@@ -71,14 +64,29 @@ public class ConnectionService extends Service {
                     @Override
                     public void run() {
                         Looper.prepare();
-                        //THE CODE HERE RUNS IN A BACKGROUND THREAD.
                         mTHandler = new Handler();
                         initConnection();
                         Looper.loop();
-
                     }
                 });
                 mThread.start();
+            }
+        }
+    }
+
+    public void initConnection() {
+        if (mConnection == null) {
+            synchronized (LOCK) {
+                mConnection = CustomConnection.getInstance(this, HOST_ADDRESS);
+                try {
+                    mConnection.connect();
+                } catch (IOException | InterruptedException | XMPPException | SmackException e) {
+                    Log.d(TAG,
+                            "Something went wrong while connecting, " +
+                                    "make sure the credentials are right and try again");
+                    e.printStackTrace();
+                    stopSelf();
+                }
             }
         }
     }
@@ -95,37 +103,6 @@ public class ConnectionService extends Service {
             }
         });
     }
-
-    private void initConnection() {
-        Log.d(TAG, "initConnection()");
-        if (mConnection == null) {
-            mConnection = new CustomConnection(this, HOST_ADDRESS);
-        }
-        try {
-            mConnection.connect();
-        } catch (IOException | SmackException | XMPPException | InterruptedException e) {
-            Log.d(TAG, "Something went wrong while connecting, make sure the credentials are right and try again");
-            e.printStackTrace();
-            //Stop the service all together.
-            stopSelf();
-        }
-
-    }
-
-//    private void receivePublished(XMPPTCPConnection connection) throws
-//            XMPPException.XMPPErrorException,
-//            PubSubException.NotAPubSubNodeException, SmackException.NotConnectedException,
-//            InterruptedException, SmackException.NoResponseException {
-//        // Create a pubsub manager using an existing XMPPConnection
-//        PubSubManager pubSubManager = PubSubManager.getInstance(connection);
-//
-//        LeafNode eventNode = pubSubManager.getNode("testNode");
-//        eventNode.addItemEventListener(eventListener);
-//        List<Subscription> subscriptions = eventNode.getSubscriptions();
-//        if (subscriptions == null) {
-//            eventNode.subscribe(String.valueOf(connection.getUser()));
-//        }
-//    }
 
     public static CustomConnection.ConnectionState getState() {
         if (sConnectionState == null) {

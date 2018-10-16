@@ -1,11 +1,9 @@
 package com.example.android.xmppclienttest.util;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.util.Log;
 
+import com.example.android.xmppclienttest.ApplicationContextProvider;
 import com.example.android.xmppclienttest.database.MessageEntry;
 import com.example.android.xmppclienttest.sync.ConnectionService;
 import com.example.android.xmppclienttest.sync.Tasks;
@@ -37,15 +35,13 @@ import java.util.List;
 public class CustomConnection implements ConnectionListener {
 
     private static final String TAG = CustomConnection.class.getSimpleName();
+    private static CustomConnection sInstance;
+    private static XMPPTCPConnection connection;
+
     private InetAddress mHostAddress;
-    public static XMPPTCPConnection connection;
     private String mUsername;
     private String mPassword;
     private String mServiceName;
-    private String mResourceName;
-
-    private BroadcastReceiver uiThreadMessageReceiver;
-    private Context mApplicationContext;
 
     public enum ConnectionState {
         CONNECTED, AUTHENTICATED, CONNECTING, DISCONNECTING, DISCONNECTED
@@ -55,9 +51,15 @@ public class CustomConnection implements ConnectionListener {
         LOGGED_IN, LOGGED_OUT
     }
 
-    public CustomConnection(Context context, String hostAddress) {
-        mApplicationContext = context.getApplicationContext();
-        mResourceName = "Strathmore-broadcast";
+    public static CustomConnection getInstance(Context context, String hostAddress) {
+        if (sInstance == null) {
+            sInstance = new CustomConnection(context, hostAddress);
+        }
+        return sInstance;
+    }
+
+    private CustomConnection(Context context, String hostAddress) {
+        String resourceName = "Strathmore-broadcast";
         // TODO (1) Change this, use the constructor instead
         mUsername = "student1";
         mPassword = "password";
@@ -82,19 +84,16 @@ public class CustomConnection implements ConnectionListener {
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
                 .build();
 
-        //Set up the ui thread broadcast message receiver.
-//        setupUiThreadBroadCastMessageReceiver();
-
         connection = new XMPPTCPConnection(configuration);
         connection.addConnectionListener(this);
         connection.connect();
         connection.login();
 
-        subscribe();
-
         ReconnectionManager.setEnabledPerDefault(true);
         ReconnectionManager reconnectionManager = ReconnectionManager.getInstanceFor(connection);
         reconnectionManager.enableAutomaticReconnection();
+
+        subscribe();
     }
 
     public void disconnect() {
@@ -104,30 +103,6 @@ public class CustomConnection implements ConnectionListener {
         }
         ConnectionService.sConnectionState = ConnectionState.DISCONNECTED;
         connection = null;
-    }
-
-    private void setupUiThreadBroadCastMessageReceiver() {
-        uiThreadMessageReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                //Check if the Intents purpose is to send the message.
-                String action = intent.getAction();
-                if (action.equals(ConnectionService.SEND_EVENT)) {
-                    //SENDS THE ACTUAL MESSAGE TO THE SERVER
-                    sendMessage(intent.getStringExtra(ConnectionService.BUNDLE_MESSAGE_BODY),
-                            intent.getStringExtra(ConnectionService.BUNDLE_TO));
-                }
-            }
-        };
-
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ConnectionService.SEND_EVENT);
-        mApplicationContext.registerReceiver(uiThreadMessageReceiver, filter);
-
-    }
-
-    private void sendMessage(String stringExtra, String stringExtra1) {
-
     }
 
     private void subscribe() {
@@ -201,7 +176,7 @@ public class CustomConnection implements ConnectionListener {
                 System.out.println("Payload message: " + payloadMessage);
                 try {
                     MessageEntry messageEntry = parser.parseTest(payloadMessage);
-                    Tasks.addEvent(mApplicationContext, messageEntry);
+                    Tasks.addEvent(ApplicationContextProvider.getContext(), messageEntry);
                     System.out.println("Parsed message: " + messageEntry.getBody());
                 } catch (XmlPullParserException | IOException e) {
                     e.printStackTrace();

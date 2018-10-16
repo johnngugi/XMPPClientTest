@@ -7,6 +7,7 @@
 
 
     <application
+        android:name=".ApplicationContextProvider"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -29,10 +30,6 @@
 
         <service
             android:name=".sync.NewEventIntentService"
-            android:exported="false" />
-
-        <service
-            android:name=".sync.EventsFirebaseJobService"
             android:exported="false" />
 
     </application>

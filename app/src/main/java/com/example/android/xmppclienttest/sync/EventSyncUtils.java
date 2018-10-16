@@ -26,46 +26,46 @@ public class EventSyncUtils {
     private static final int SYNC_FLEXTIME_SECONDS = SYNC_INTERVAL_SECONDS / 2;
     private static boolean sInitialized;
 
-    static void scheduleEventJobDispatcherSchedule(Context context, CustomConnection connection) {
-        GooglePlayDriver driver = new GooglePlayDriver(context);
-        FirebaseJobDispatcher firebaseJobDispatcher = new FirebaseJobDispatcher(driver);
+//    static void scheduleEventJobDispatcherSchedule(Context context, CustomConnection connection) {
+//        GooglePlayDriver driver = new GooglePlayDriver(context);
+//        FirebaseJobDispatcher firebaseJobDispatcher = new FirebaseJobDispatcher(driver);
+//
+//        Job syncJob = firebaseJobDispatcher.newJobBuilder()
+//                .setService(EventsFirebaseJobService.class)
+//                .setTag(SYNC_TAG)
+//                .setConstraints(Constraint.ON_UNMETERED_NETWORK)
+//                .setLifetime(Lifetime.FOREVER)
+//                .setRecurring(true)
+//                .setTrigger(Trigger.executionWindow(
+//                        SYNC_INTERVAL_SECONDS,
+//                        SYNC_INTERVAL_SECONDS + SYNC_FLEXTIME_SECONDS))
+//                .setReplaceCurrent(true)
+//                .build();
+//
+//        firebaseJobDispatcher.schedule(syncJob);
+//    }
 
-        Job syncJob = firebaseJobDispatcher.newJobBuilder()
-                .setService(EventsFirebaseJobService.class)
-                .setTag(SYNC_TAG)
-                .setConstraints(Constraint.ON_UNMETERED_NETWORK)
-                .setLifetime(Lifetime.FOREVER)
-                .setRecurring(true)
-                .setTrigger(Trigger.executionWindow(
-                        SYNC_INTERVAL_SECONDS,
-                        SYNC_INTERVAL_SECONDS + SYNC_FLEXTIME_SECONDS))
-                .setReplaceCurrent(true)
-                .build();
-
-        firebaseJobDispatcher.schedule(syncJob);
-    }
-
-    synchronized public static void initialize(final Context context, CustomConnection connection) {
-        if (sInitialized) return;
-
-        sInitialized = true;
-
-        scheduleEventJobDispatcherSchedule(context, connection);
-
-        final AppDatabase db = AppDatabase.getInstance(context);
-
-        Thread checkForEmpty = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                LiveData<List<MessageEntry>> entries = db.messageDao().loadAllMessages();
-                List<MessageEntry> messageEntries = entries.getValue();
-                if (messageEntries == null || messageEntries.size() == 0) {
-                    startImmediateSync(context);
-                }
-            }
-        });
-        checkForEmpty.start();
-    }
+//    synchronized public static void initialize(final Context context, CustomConnection connection) {
+//        if (sInitialized) return;
+//
+//        sInitialized = true;
+//
+//        scheduleEventJobDispatcherSchedule(context, connection);
+//
+//        final AppDatabase db = AppDatabase.getInstance(context);
+//
+//        Thread checkForEmpty = new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                LiveData<List<MessageEntry>> entries = db.messageDao().loadAllMessages();
+//                List<MessageEntry> messageEntries = entries.getValue();
+//                if (messageEntries == null || messageEntries.size() == 0) {
+//                    startImmediateSync(context);
+//                }
+//            }
+//        });
+//        checkForEmpty.start();
+//    }
 
     public static void startImmediateSync(Context context) {
         Intent intent = new Intent(context, NewEventIntentService.class);
