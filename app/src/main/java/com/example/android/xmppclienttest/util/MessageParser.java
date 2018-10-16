@@ -22,6 +22,7 @@ public class MessageParser {
         return message.substring(firstTagPosition, lastTagPosition + 1);
     }
 
+    // TODO (3) Change name from parseTest parseContent when finished
     public MessageEntry parseTest(String rawXml) throws XmlPullParserException, IOException {
         InputStream stream = new ByteArrayInputStream(rawXml.getBytes());
 
