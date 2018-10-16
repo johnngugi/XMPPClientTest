@@ -79,7 +79,6 @@ public class CustomConnection implements ConnectionListener {
                 .setXmppDomain("strathmore-computer")
                 .setHostAddress(mHostAddress)
                 .setPort(5222)
-                .setResource(mResourceName)
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
                 .build();
 
@@ -147,7 +146,11 @@ public class CustomConnection implements ConnectionListener {
                         Jid jid = subscription.getJid();
                         EntityFullJid userJid = connection.getUser();
                         Subscription.State state = subscription.getState();
-                        if (userJid == jid && state != Subscription.State.subscribed) {
+                        if (userJid == jid) {
+                            if (state != Subscription.State.subscribed) {
+                                eventNode.subscribe(String.valueOf(userJid));
+                            }
+                        } else {
                             eventNode.subscribe(String.valueOf(userJid));
                         }
                     }
