@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.example.android.xmppclienttest.database.MessageEntry;
 
+import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
@@ -54,6 +55,9 @@ public class NetworkUtils {
             e.printStackTrace();
         }
         return events;
+    }
+
+    public static void retreiveImage(AbstractXMPPConnection connection) {
     }
 
 }
