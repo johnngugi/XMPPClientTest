@@ -5,4 +5,5 @@
     <string name="main_notification_channel_name">Primary</string>
     <string name="new_event_notification_title">New event</string>
     <string name="new_event_notification_body">Don\'t miss out</string>
+    <string name="user_resource_jid">user_resource_jid</string>
 </resources>

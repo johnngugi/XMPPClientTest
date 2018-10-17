@@ -42,23 +42,8 @@ public class MainActivity extends AppCompatActivity {
         mDb = AppDatabase.getInstance(getApplicationContext());
         setupViewModel();
 
-//        final BroadcastClientTest clientTest = new BroadcastClientTest(mDb);
-//        Thread thread = new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                clientTest.broadCast();
-//            }
-//        });
-//        thread.start();
-
         Intent backgroundService = new Intent(this, ConnectionService.class);
         startService(backgroundService);
-//
-//        Intent eventNotificationIntent = new Intent(this, NewEventIntentService.class);
-//        eventNotificationIntent.setAction(Tasks.ACTION_NEW_EVENT);
-//        startService(eventNotificationIntent);
-
-//        EventSyncUtils.initialize(getApplicationContext(), ConnectionService.mConnection);
     }
 
     private void setupViewModel() {
@@ -74,29 +59,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-//        mBroadcastReceiver = new BroadcastReceiver() {
-//            @Override
-//            public void onReceive(Context context, Intent intent) {
-//                String action = intent.getAction();
-//                switch (action) {
-//                    case ConnectionService.NEW_EVENT:
-//                        String from = intent.getStringExtra(ConnectionService.BUNDLE_FROM_JID);
-//                        String body = intent.getStringExtra(ConnectionService.BUNDLE_MESSAGE_BODY);
-//
-//                        return;
-//                }
-//
-//            }
-//        };
-
-//        IntentFilter filter = new IntentFilter(ConnectionService.NEW_EVENT);
-//        registerReceiver(mBroadcastReceiver,filter);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-//        unregisterReceiver(mBroadcastReceiver);
     }
 
     @Override
