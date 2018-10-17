@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.example.android.xmppclienttest.ApplicationContextProvider;
+import com.example.android.xmppclienttest.R;
 import com.example.android.xmppclienttest.database.MessageEntry;
 import com.example.android.xmppclienttest.sync.ConnectionService;
 import com.example.android.xmppclienttest.sync.Tasks;
@@ -22,6 +23,7 @@ import org.jivesoftware.smackx.pubsub.ItemPublishEvent;
 import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
+import org.jivesoftware.smackx.pubsub.Subscription;
 import org.jivesoftware.smackx.pubsub.listener.ItemEventListener;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.xmlpull.v1.XmlPullParserException;
@@ -29,11 +31,13 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 
 public class CustomConnection implements ConnectionListener {
 
     private static final String TAG = CustomConnection.class.getSimpleName();
     private static final String DEFAULT_USER_RESOURCE = "strathmore-student";
+    private static final String DEFAULT_USER_SUBSCRIPTION = "important";
 
     private static CustomConnection sInstance;
     private static XMPPTCPConnection connection;
@@ -44,6 +48,8 @@ public class CustomConnection implements ConnectionListener {
     private String mServiceName;
 
     private String mUserJidResource;
+
+    private XMPPTCPConnectionConfiguration.Builder connectionConfiguration;
 
     public enum ConnectionState {
         CONNECTED, AUTHENTICATED, CONNECTING, DISCONNECTING, DISCONNECTED
@@ -78,7 +84,7 @@ public class CustomConnection implements ConnectionListener {
 
         // TODO: Remove debug when testing is finished
         SmackConfiguration.DEBUG = true;
-        XMPPTCPConnectionConfiguration.Builder configuration = XMPPTCPConnectionConfiguration.builder()
+        connectionConfiguration = XMPPTCPConnectionConfiguration.builder()
                 .setUsernameAndPassword(mUsername, mPassword)
                 .setXmppDomain("strathmore-computer")
                 .setHostAddress(mHostAddress)
@@ -88,20 +94,36 @@ public class CustomConnection implements ConnectionListener {
         // Check if user resource is set and use that to connect
         // If not connect and save the new user resource
         if (checkResourceNameIsSet()) {
-            configuration.setResource(mUserJidResource);
-            connectAndLogin(configuration);
+            connectionConfiguration.setResource(mUserJidResource);
+            connectAndLogin(connectionConfiguration);
         } else {
-            connectAndLogin(configuration);
+            connectAndLogin(connectionConfiguration);
             setUserResourceName();
+            disconnectThenAttemptReconnect();
         }
 
         ReconnectionManager.setEnabledPerDefault(true);
         ReconnectionManager reconnectionManager = ReconnectionManager.getInstanceFor(connection);
         reconnectionManager.enableAutomaticReconnection();
 
-        setUserResourceName();
-
         subscribe();
+    }
+
+    private void disconnectThenAttemptReconnect() {
+        Log.d(TAG, "Disconnecting from server, attempting reconnect " + mServiceName);
+        disconnect();
+        try {
+            connectionConfiguration = XMPPTCPConnectionConfiguration.builder()
+                    .setUsernameAndPassword(mUsername, mPassword)
+                    .setXmppDomain("strathmore-computer")
+                    .setHostAddress(mHostAddress)
+                    .setPort(5222)
+                    .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
+                    .setResource(mUserJidResource);
+            connectAndLogin(connectionConfiguration);
+        } catch (InterruptedException | XMPPException | SmackException | IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void connectAndLogin(XMPPTCPConnectionConfiguration.Builder configuration)
@@ -114,26 +136,35 @@ public class CustomConnection implements ConnectionListener {
 
     private void setUserResourceName() {
         Context context = ApplicationContextProvider.getContext();
+
+        String resourceNameKey = context.getResources().getString(
+                R.string.shared_preference_file);
+        String userResourceJidKey = context.getResources().getString(R.string.user_resource_jid_key);
+
         SharedPreferences sharedPref = context.getSharedPreferences(
-                "com.example.android.xmppclienttest", Context.MODE_PRIVATE);
+                resourceNameKey, Context.MODE_PRIVATE);
 
         Resourcepart resourcepart = connection.getUser().getResourceOrNull();
 
         if (resourcepart != null) {
             mUserJidResource = resourcepart.toString();
             SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putString("user_resource_jid", mUserJidResource);
+            editor.putString(userResourceJidKey, mUserJidResource);
             editor.apply();
         }
     }
 
     private boolean checkResourceNameIsSet() {
         Context context = ApplicationContextProvider.getContext();
-        SharedPreferences sharedPref = context.getSharedPreferences(
-                "com.example.android.xmppclienttest", Context.MODE_PRIVATE);
 
-        String userResourceName = sharedPref.getString(
-                "user_resource_jid", DEFAULT_USER_RESOURCE);
+        String resourceNameKey = context.getResources().getString(
+                R.string.shared_preference_file);
+        String userResourceJidKey = context.getResources().getString(R.string.user_resource_jid_key);
+
+        SharedPreferences sharedPref = context.getSharedPreferences(
+                resourceNameKey, Context.MODE_PRIVATE);
+
+        String userResourceName = sharedPref.getString(userResourceJidKey, DEFAULT_USER_RESOURCE);
 
         boolean userResourceIsSet = !DEFAULT_USER_RESOURCE.equals(userResourceName);
 
@@ -153,6 +184,36 @@ public class CustomConnection implements ConnectionListener {
         connection = null;
     }
 
+    private boolean checkSubIdIsSet() {
+        Context context = ApplicationContextProvider.getContext();
+
+        String resourceName = context.getResources().getString(
+                R.string.shared_preference_file);
+        String broadcastSubIdKey = context.getResources().getString(R.string.broadcast_sub_id_key);
+
+        SharedPreferences sharedPref = context.getSharedPreferences(
+                resourceName, Context.MODE_PRIVATE);
+
+        String userSubId = sharedPref.getString(broadcastSubIdKey, DEFAULT_USER_SUBSCRIPTION);
+
+        return !DEFAULT_USER_SUBSCRIPTION.equals(userSubId);
+    }
+
+    private void saveSubscriptionId(String subId) {
+        Context context = ApplicationContextProvider.getContext();
+
+        String resourceName = context.getResources().getString(
+                R.string.shared_preference_file);
+        String broadcastSubIdKey = context.getResources().getString(R.string.broadcast_sub_id_key);
+
+        SharedPreferences sharedPref = context.getSharedPreferences(
+                resourceName, Context.MODE_PRIVATE);
+
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(broadcastSubIdKey, subId);
+        editor.apply();
+    }
+
     private void subscribe() {
         Log.d(TAG, "subscribe()");
         try {
@@ -160,7 +221,15 @@ public class CustomConnection implements ConnectionListener {
                 PubSubManager pubSubManager = PubSubManager.getInstance(connection);
                 LeafNode eventNode = pubSubManager.getNode("testNode");
                 eventNode.addItemEventListener(new PublishItemEventListener());
-                eventNode.subscribe(String.valueOf(connection.getUser()));
+
+                if (!checkSubIdIsSet()) {
+                    eventNode.addItemEventListener(new PublishItemEventListener());
+                    eventNode.subscribe(String.valueOf(connection.getUser()));
+                    List<Subscription> subscriptions = pubSubManager.getSubscriptions();
+                    Subscription lastSub = subscriptions.get(subscriptions.size() - 1);
+                    String subId = lastSub.getId();
+                    saveSubscriptionId(subId);
+                }
             }
         } catch (InterruptedException | XMPPException | SmackException e) {
             e.printStackTrace();

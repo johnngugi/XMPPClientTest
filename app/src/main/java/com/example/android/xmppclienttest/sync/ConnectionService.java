@@ -11,7 +11,6 @@ import com.example.android.xmppclienttest.util.CustomConnection;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
-import org.jxmpp.jid.EntityBareJid;
 
 import java.io.IOException;
 
@@ -24,7 +23,7 @@ public class ConnectionService extends Service {
     public static CustomConnection.LoggedInState sLoggedInState;
     public static CustomConnection mConnection;
 
-    public static final String HOST_ADDRESS = "10.55.41.4";
+    public static final String HOST_ADDRESS = "192.168.100.4";
 
     private boolean mActive;//Stores whether or not the thread is active
     private Thread mThread;

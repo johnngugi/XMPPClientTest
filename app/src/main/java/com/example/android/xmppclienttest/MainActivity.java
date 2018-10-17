@@ -2,7 +2,6 @@ package com.example.android.xmppclienttest;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -21,9 +20,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private AppDatabase mDb;
-
     private CustomItemAdapter mAdapter;
-    private BroadcastReceiver mBroadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
