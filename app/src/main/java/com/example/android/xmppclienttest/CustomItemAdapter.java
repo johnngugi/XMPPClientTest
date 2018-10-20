@@ -14,12 +14,15 @@ import java.util.List;
 
 public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.ItemViewHolder> {
 
+    final private ItemClickListener mItemClickListener;
+
     private List<MessageEntry> mMessages;
 
     private Context mContext;
 
-    public CustomItemAdapter(Context context) {
+    public CustomItemAdapter(Context context, ItemClickListener listener) {
         mContext = context;
+        mItemClickListener = listener;
     }
 
     @NonNull
@@ -58,7 +61,11 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.It
         notifyDataSetChanged();
     }
 
-    public class ItemViewHolder extends RecyclerView.ViewHolder {
+    public interface ItemClickListener {
+        void onItemClickListener(int itemId);
+    }
+
+    public class ItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView mItemTitle, mItemDescription;
 
         public ItemViewHolder(@NonNull View itemView) {
@@ -66,6 +73,13 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.It
 
             mItemTitle = itemView.findViewById(R.id.tv_item_title);
             mItemDescription = itemView.findViewById(R.id.tv_item_description);
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            int elementId = mMessages.get(getAdapterPosition()).getId();
+            mItemClickListener.onItemClickListener(elementId);
         }
     }
 }
