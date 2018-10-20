@@ -32,7 +32,6 @@
             android:name=".sync.NewEventIntentService"
             android:exported="false" />
 
-        <activity android:name=".TestActivity" />
         <activity
             android:name=".MessageDetailActivity"
             android:parentActivityName=".MainActivity"
