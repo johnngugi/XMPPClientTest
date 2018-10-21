@@ -11,6 +11,7 @@ public class MessageEntry {
     private int id;
     private String subject;
     private String body;
+    private String filePath;
 
     @Ignore
     public MessageEntry(String subject, String body) {
@@ -36,6 +37,10 @@ public class MessageEntry {
         return body;
     }
 
+    public String getFilePath() {
+        return filePath;
+    }
+
     public void setSubject(String subject) {
         this.subject = subject;
     }
@@ -43,5 +48,8 @@ public class MessageEntry {
     public void setBody(String body) {
         this.body = body;
     }
-    
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
 }
