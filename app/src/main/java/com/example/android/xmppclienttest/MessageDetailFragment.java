@@ -3,6 +3,8 @@ package com.example.android.xmppclienttest;
 import android.app.Activity;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -12,10 +14,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
+
+import java.io.File;
 
 public class MessageDetailFragment extends Fragment {
 
@@ -92,6 +97,14 @@ public class MessageDetailFragment extends Fragment {
     }
 
     private void populateUI(MessageEntry messageEntry) {
+        File baseFilePath = ApplicationContextProvider.getContext().getFilesDir();
+        File imgFile = new File(baseFilePath, messageEntry.getFilePath());
+        System.out.println("Image filename: " + messageEntry.getFilePath());
+        ImageView imageView = getActivity().findViewById(R.id.toolbarImage);
+        if (imgFile.exists()) {
+            Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+            imageView.setImageBitmap(bitmap);
+        }
         mMessageBody.setText(messageEntry.getBody());
     }
 

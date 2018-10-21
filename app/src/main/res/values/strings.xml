@@ -12,4 +12,5 @@
         com.example.android.xmppclienttest
     </string>
     <string name="long_latin">lorem ipsum dolor sit amet</string>
+    <string name="contentImage">Headline image</string>
 </resources>
