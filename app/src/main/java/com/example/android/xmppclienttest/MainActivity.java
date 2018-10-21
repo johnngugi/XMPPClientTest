@@ -8,21 +8,19 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
 import com.example.android.xmppclienttest.sync.ConnectionService;
-import com.example.android.xmppclienttest.sync.NewEventIntentService;
-import com.example.android.xmppclienttest.sync.Tasks;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements CustomItemAdapter.ItemClickListener {
 
     private AppDatabase mDb;
-
     private CustomItemAdapter mAdapter;
 
     @Override
@@ -30,32 +28,24 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        toolbar.setTitle(getTitle());
+
         RecyclerView recyclerView = findViewById(R.id.rv_numbers);
         recyclerView.setHasFixedSize(true);
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
 
-        mAdapter = new CustomItemAdapter(this);
+        mAdapter = new CustomItemAdapter(this, this);
         recyclerView.setAdapter(mAdapter);
 
         mDb = AppDatabase.getInstance(getApplicationContext());
         setupViewModel();
 
-//        final BroadcastClientTest clientTest = new BroadcastClientTest(mDb);
-//        Thread thread = new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                clientTest.broadCast();
-//            }
-//        });
-//        thread.start();
         Intent backgroundService = new Intent(this, ConnectionService.class);
         startService(backgroundService);
-
-        Intent eventNotificationIntent = new Intent(this, NewEventIntentService.class);
-        eventNotificationIntent.setAction(Tasks.ACTION_NEW_EVENT);
-        startService(eventNotificationIntent);
     }
 
     private void setupViewModel() {
@@ -63,9 +53,19 @@ public class MainActivity extends AppCompatActivity {
         viewModel.getMessages().observe(this, new Observer<List<MessageEntry>>() {
             @Override
             public void onChanged(@Nullable List<MessageEntry> messageEntries) {
-                mAdapter.setmMessages(messageEntries);
+                mAdapter.setMessages(messageEntries);
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 
     @Override
@@ -112,5 +112,14 @@ public class MainActivity extends AppCompatActivity {
                 mDb.messageDao().deleteAllMessages();
             }
         });
+    }
+
+    @Override
+    public void onItemClickListener(int itemId) {
+        // TODO: start MessageDetailActivity
+        // Launch MessageDetailActivity adding the itemId as an extra in the intent
+        Intent intent = new Intent(MainActivity.this, MessageDetailActivity.class);
+        intent.putExtra(MessageDetailActivity.EXTRA_MESSAGE_ID, itemId);
+        startActivity(intent);
     }
 }

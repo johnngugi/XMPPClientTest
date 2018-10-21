@@ -5,4 +5,12 @@
     <string name="main_notification_channel_name">Primary</string>
     <string name="new_event_notification_title">New event</string>
     <string name="new_event_notification_body">Don\'t miss out</string>
+
+    <string name="user_resource_jid_key">user_resource_jid</string>
+    <string name="broadcast_sub_id_key">broadcast_sub_id</string>
+    <string name="shared_preference_file">
+        com.example.android.xmppclienttest
+    </string>
+    <string name="long_latin">lorem ipsum dolor sit amet</string>
+    <string name="contentImage">Headline image</string>
 </resources>
