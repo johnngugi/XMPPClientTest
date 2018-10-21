@@ -34,8 +34,7 @@ public class MessageParser {
         return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
     }
 
-    // TODO (3) Change name from parseTest parseContent when finished
-    public MessageEntry parseTest(String rawXml) throws XmlPullParserException, IOException {
+    public MessageEntry parseContent(String rawXml) throws XmlPullParserException, IOException {
         InputStream stream = new ByteArrayInputStream(rawXml.getBytes());
 
         try {

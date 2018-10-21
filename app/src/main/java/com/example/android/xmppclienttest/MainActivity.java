@@ -116,7 +116,6 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
 
     @Override
     public void onItemClickListener(int itemId) {
-        // TODO: start MessageDetailActivity
         // Launch MessageDetailActivity adding the itemId as an extra in the intent
         Intent intent = new Intent(MainActivity.this, MessageDetailActivity.class);
         intent.putExtra(MessageDetailActivity.EXTRA_MESSAGE_ID, itemId);
