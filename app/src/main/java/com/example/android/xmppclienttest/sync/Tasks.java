@@ -31,7 +31,7 @@ public class Tasks {
 
     public static void addEvent(Context context, final MessageEntry messageEntry) {
         db = AppDatabase.getInstance(context);
-        AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
+        AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
             @Override
             public void run() {
                 db.messageDao().insertSingleMessage(messageEntry);
@@ -46,7 +46,7 @@ public class Tasks {
         Log.d(TAG, "" + events.size());
 
         for (final MessageEntry entry : events) {
-            AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
+            AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
                 @Override
                 public void run() {
                     db.messageDao().insertSingleMessage(entry);

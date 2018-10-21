@@ -56,8 +56,4 @@ public class NetworkUtils {
         }
         return events;
     }
-
-    public static void retreiveImage(AbstractXMPPConnection connection) {
-    }
-
 }

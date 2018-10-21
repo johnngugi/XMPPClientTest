@@ -8,13 +8,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationCompat.Action;
 import android.util.Log;
 
 import com.example.android.xmppclienttest.MainActivity;
 import com.example.android.xmppclienttest.R;
-import com.example.android.xmppclienttest.sync.NewEventIntentService;
-import com.example.android.xmppclienttest.sync.Tasks;
 
 public class NotificationUtils {
 
@@ -23,7 +20,6 @@ public class NotificationUtils {
 
     private static final String NEW_EVENT_NOTIFICATION_CHANNEL_ID = "event_notification_channel";
 
-    private static final int ACTION_DRINK_PENDING_INTENT_ID = 1;
     private static final String TAG = NotificationUtils.class.getSimpleName();
 
     public static void alertUserAboutNewEvent(Context context) {
@@ -46,7 +42,6 @@ public class NotificationUtils {
                         context.getString(R.string.new_event_notification_body)))
                 .setDefaults(Notification.DEFAULT_VIBRATE)
                 .setContentIntent(contentIntent(context))
-//                .addAction(drinkWaterAction(context))
                 .setAutoCancel(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
@@ -55,20 +50,6 @@ public class NotificationUtils {
         }
         notificationManager.notify(NEW_EVENT_NOTIFICATION_ID, notificationBuilder.build());
     }
-
-//    private static Action drinkWaterAction(Context context) {
-//        Intent incrementWaterCountIntent = new Intent(context, NewEventIntentService.class);
-//        incrementWaterCountIntent.setAction(Tasks.ACTION_NEW_EVENT);
-//        PendingIntent incrementWaterPendingIntent = PendingIntent.getService(
-//                context,
-//                ACTION_DRINK_PENDING_INTENT_ID,
-//                incrementWaterCountIntent,
-//                PendingIntent.FLAG_CANCEL_CURRENT);
-//        Action drinkWaterAction = new Action(R.drawable.ic_local_drink_black_24px,
-//                "I did it!",
-//                incrementWaterPendingIntent);
-//        return drinkWaterAction;
-//    }
 
     private static PendingIntent contentIntent(Context context) {
         Intent startActivityIntent = new Intent(context, MainActivity.class);

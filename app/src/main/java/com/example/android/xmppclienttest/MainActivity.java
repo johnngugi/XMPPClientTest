@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
         final String description = "Lorem ipsum dolor sit amet";
         final MessageEntry message = new MessageEntry(title, description);
 
-        AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
+        AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
             @Override
             public void run() {
                 mDb.messageDao().insertSingleMessage(message);
@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
     }
 
     private void deleteMessages() {
-        AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
+        AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
             @Override
             public void run() {
                 mDb.messageDao().deleteAllMessages();
