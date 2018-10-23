@@ -13,4 +13,7 @@
     </string>
     <string name="long_latin">lorem ipsum dolor sit amet</string>
     <string name="contentImage">Headline image</string>
+    <string name="remote_host_address_key">remote_host_address_key</string>
+    <string name="no_wifi_connection">No WIFI connection</string>
+    <string name="No_messages">No messages</string>
 </resources>

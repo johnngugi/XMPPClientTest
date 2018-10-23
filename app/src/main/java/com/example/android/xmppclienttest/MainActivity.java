@@ -2,7 +2,12 @@ package com.example.android.xmppclienttest;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -11,6 +16,8 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
@@ -22,6 +29,8 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
 
     private AppDatabase mDb;
     private CustomItemAdapter mAdapter;
+    private TextView mEmptyStateTextView;
+    private RecyclerView mRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,20 +41,55 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
-        RecyclerView recyclerView = findViewById(R.id.rv_numbers);
-        recyclerView.setHasFixedSize(true);
+        mRecyclerView = findViewById(R.id.rv_numbers);
+        mRecyclerView.setHasFixedSize(true);
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
+        mRecyclerView.setLayoutManager(layoutManager);
 
         mAdapter = new CustomItemAdapter(this, this);
-        recyclerView.setAdapter(mAdapter);
+        mRecyclerView.setAdapter(mAdapter);
+
+        mEmptyStateTextView = findViewById(R.id.empty_view);
 
         mDb = AppDatabase.getInstance(getApplicationContext());
         setupViewModel();
 
-        Intent backgroundService = new Intent(this, ConnectionService.class);
-        startService(backgroundService);
+        boolean isConnected = isConnectedToWifi();
+
+        if (isConnected) {
+            Intent backgroundService = new Intent(this, ConnectionService.class);
+            startService(backgroundService);
+        } else {
+//            // Otherwise, display error
+//            // First, hide loading indicator so error message will be visible
+//            View loadingIndicator = findViewById(R.id.loading_indicator);
+//            loadingIndicator.setVisibility(View.GONE);
+
+            // Update empty state with no connection error message
+            mRecyclerView.setVisibility(View.GONE);
+            mEmptyStateTextView.setText(R.string.no_wifi_connection);
+        }
+
+//        MessageUtilities.scheduleRetrieveNewMessages(this);
+    }
+
+    private boolean isConnectedToWifi() {
+        ConnectivityManager cm =
+                (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            NetworkCapabilities networkCapabilities = cm.getNetworkCapabilities(cm.getActiveNetwork());
+            isConnected =
+                    isConnected &&
+                            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+        } else {
+            isConnected = isConnected && activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
+        }
+        return isConnected;
     }
 
     private void setupViewModel() {
@@ -54,6 +98,14 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
             @Override
             public void onChanged(@Nullable List<MessageEntry> messageEntries) {
                 mAdapter.setMessages(messageEntries);
+                if (mAdapter.getItemCount() == 0) {
+                    mRecyclerView.setVisibility(View.GONE);
+                    mEmptyStateTextView.setVisibility(View.VISIBLE);
+                } else {
+                    mRecyclerView.setVisibility(View.VISIBLE);
+                    mEmptyStateTextView.setText(R.string.No_messages);
+                    mEmptyStateTextView.setVisibility(View.GONE);
+                }
             }
         });
     }

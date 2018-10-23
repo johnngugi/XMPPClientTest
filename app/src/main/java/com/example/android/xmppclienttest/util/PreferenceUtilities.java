@@ -11,7 +11,7 @@ import org.jxmpp.jid.parts.Resourcepart;
 
 import java.util.UUID;
 
-class PreferenceUtilities {
+public class PreferenceUtilities {
 
     private static final String PREF_UNIQUE_ID = "PREF_UNIQUE_ID";
 
@@ -112,5 +112,26 @@ class PreferenceUtilities {
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putString(broadcastSubIdKey, subId);
         editor.apply();
+    }
+
+    public static String getSavedHostAddress(Context context) {
+        String sharedPrefsFile = context.getResources().getString(
+                R.string.shared_preference_file);
+        String remoteHostAddressKey =
+                context.getResources().getString(R.string.remote_host_address_key);
+
+        SharedPreferences sharedPref = context.getSharedPreferences(
+                sharedPrefsFile, Context.MODE_PRIVATE);
+
+        String remoteHostAddress = sharedPref.getString(remoteHostAddressKey, null);
+
+        if (remoteHostAddress == null) {
+            String defaultRemoteHost = CustomConnection.getDefaultRemoteHostAddress();
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString(remoteHostAddressKey, defaultRemoteHost);
+            editor.apply();
+            return defaultRemoteHost;
+        }
+        return remoteHostAddress;
     }
 }

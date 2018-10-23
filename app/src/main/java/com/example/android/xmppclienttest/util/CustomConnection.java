@@ -1,11 +1,9 @@
 package com.example.android.xmppclienttest.util;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.example.android.xmppclienttest.ApplicationContextProvider;
-import com.example.android.xmppclienttest.R;
 import com.example.android.xmppclienttest.database.MessageEntry;
 import com.example.android.xmppclienttest.sync.ConnectionService;
 import com.example.android.xmppclienttest.sync.Tasks;
@@ -46,6 +44,7 @@ public class CustomConnection implements ConnectionListener {
 
     private static CustomConnection sInstance;
     private static XMPPTCPConnection connection;
+    private static String DEFAULT_REMOTE_HOST_ADDRESS = "10.50.4.141";
 
     private InetAddress mHostAddress;
     private String mUsername;
@@ -55,6 +54,18 @@ public class CustomConnection implements ConnectionListener {
     private String mUserJidResource;
 
     private XMPPTCPConnectionConfiguration.Builder connectionConfiguration;
+
+    public static String getDefaultRemoteHostAddress() {
+        return DEFAULT_REMOTE_HOST_ADDRESS;
+    }
+
+    public static String getDefaultUserName() {
+        return DEFAULT_USER_NAME;
+    }
+
+    public static String getDefaultUserSubscription() {
+        return DEFAULT_USER_SUBSCRIPTION;
+    }
 
     public enum ConnectionState {
         CONNECTED, AUTHENTICATED, CONNECTING, DISCONNECTING, DISCONNECTED
@@ -158,7 +169,12 @@ public class CustomConnection implements ConnectionListener {
             throws SmackException, IOException, XMPPException, InterruptedException {
         connection = new XMPPTCPConnection(configuration.build());
         connection.addConnectionListener(this);
-        connection.connect();
+
+        try {
+            connection.connect();
+        } catch (SmackException.ConnectionException e) {
+            e.getFailedAddresses();
+        }
         connection.login();
 
         ReconnectionManager.setEnabledPerDefault(true);
@@ -239,14 +255,6 @@ public class CustomConnection implements ConnectionListener {
 
     public XMPPTCPConnection getXmppTcpConnection() {
         return connection;
-    }
-
-    public static String getDefaultUserName() {
-        return DEFAULT_USER_NAME;
-    }
-
-    public static String getDefaultUserSubscription() {
-        return DEFAULT_USER_SUBSCRIPTION;
     }
 
     private class PublishItemEventListener implements ItemEventListener {

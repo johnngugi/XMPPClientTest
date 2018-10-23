@@ -98,12 +98,16 @@ public class MessageDetailFragment extends Fragment {
 
     private void populateUI(MessageEntry messageEntry) {
         File baseFilePath = ApplicationContextProvider.getContext().getFilesDir();
-        File imgFile = new File(baseFilePath, messageEntry.getFilePath());
-        System.out.println("Image filename: " + messageEntry.getFilePath());
-        ImageView imageView = getActivity().findViewById(R.id.toolbarImage);
-        if (imgFile.exists()) {
-            Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-            imageView.setImageBitmap(bitmap);
+        String imgPath = messageEntry.getFilePath();
+
+        if (imgPath != null) {
+            File imgFile = new File(baseFilePath, messageEntry.getFilePath());
+            System.out.println("Image filename: " + messageEntry.getFilePath());
+            ImageView imageView = getActivity().findViewById(R.id.toolbarImage);
+            if (imgFile.exists()) {
+                Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+                imageView.setImageBitmap(bitmap);
+            }
         }
         mMessageBody.setText(messageEntry.getBody());
     }

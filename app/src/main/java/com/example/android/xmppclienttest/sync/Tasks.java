@@ -1,17 +1,12 @@
 package com.example.android.xmppclienttest.sync;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.example.android.xmppclienttest.AppExecutors;
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
-import com.example.android.xmppclienttest.util.NetworkUtils;
 import com.example.android.xmppclienttest.util.NotificationUtils;
-
-import org.jivesoftware.smack.tcp.XMPPTCPConnection;
-
-import java.util.List;
+import com.example.android.xmppclienttest.util.PreferenceUtilities;
 
 public class Tasks {
     public static final String ACTION_NEW_EVENT = "new-event";
@@ -20,13 +15,9 @@ public class Tasks {
     private static AppDatabase db;
 
     public static void executeTask(Context context, String action) {
-        if (ACTION_NEW_EVENT.equals(action)) {
-            alertNewEvent(context);
+        if (ACTION_FETCH_EVENT.equals(action)) {
+            MessageUtilities.fetchNewEvent(context, PreferenceUtilities.getSavedHostAddress(context));
         }
-    }
-
-    private static void alertNewEvent(Context context) {
-        NotificationUtils.alertUserAboutNewEvent(context);
     }
 
     public static void addEvent(Context context, final MessageEntry messageEntry) {
@@ -38,20 +29,5 @@ public class Tasks {
             }
         });
         NotificationUtils.alertUserAboutNewEvent(context);
-    }
-
-    public static void getEvent(Context context, XMPPTCPConnection connection) {
-        Log.d(TAG, "Connection: " + connection.isConnected());
-        List<MessageEntry> events = NetworkUtils.retrievePublished(context, connection);
-        Log.d(TAG, "" + events.size());
-
-        for (final MessageEntry entry : events) {
-            AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
-                @Override
-                public void run() {
-                    db.messageDao().insertSingleMessage(entry);
-                }
-            });
-        }
     }
 }
