@@ -170,12 +170,8 @@ public class CustomConnection implements ConnectionListener {
         connection = new XMPPTCPConnection(configuration.build());
         connection.addConnectionListener(this);
 
-        try {
-            connection.connect();
-            connection.login();
-        } catch (SmackException.ConnectionException e) {
-            e.printStackTrace();
-        }
+        connection.connect();
+        connection.login();
 
         ReconnectionManager.setEnabledPerDefault(true);
         ReconnectionManager reconnectionManager = ReconnectionManager.getInstanceFor(connection);

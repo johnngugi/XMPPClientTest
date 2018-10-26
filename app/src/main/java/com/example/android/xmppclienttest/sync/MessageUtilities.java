@@ -23,6 +23,7 @@ import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class MessageUtilities {
@@ -69,10 +70,13 @@ public class MessageUtilities {
 //            node.subscribe(String.valueOf(connection.getXmppTcpConnection().getUser()));
             connection.subscribe(null);
             LeafNode node = connection.getNode();
-            PayloadItem item = (PayloadItem) node.getItems(1).get(0);
-            String payloadMessage = parser.retreiveXmlString(item.getPayload().toString());
-            MessageEntry messageEntry = parser.parseContent(payloadMessage);
-            Tasks.addEvent(ApplicationContextProvider.getContext(), messageEntry);
+            List<PayloadItem> items = node.getItems(1);
+            if (items.size() > 0) {
+                PayloadItem item = items.get(0);
+                String payloadMessage = parser.retreiveXmlString(item.getPayload().toString());
+                MessageEntry messageEntry = parser.parseContent(payloadMessage);
+                Tasks.addEvent(ApplicationContextProvider.getContext(), messageEntry);
+            }
             connection.disconnect();
         } catch (InterruptedException e) {
             e.printStackTrace();

@@ -127,6 +127,8 @@ public class ConnectionService extends Service {
                 try {
                     mConnection.connect();
                     mConnection.subscribe(new PublishItemEventListener());
+                } catch (SmackException.ConnectionException e) {
+                    System.out.println("Server not found");
                 } catch (IOException | InterruptedException | XMPPException | SmackException e) {
                     Log.d(TAG,
                             "Something went wrong while connecting, " +
