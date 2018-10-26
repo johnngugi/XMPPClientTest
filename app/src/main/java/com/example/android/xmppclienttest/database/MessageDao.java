@@ -19,7 +19,7 @@ public interface MessageDao {
     @Query("SELECT * FROM message WHERE id = :id")
     LiveData<MessageEntry> loadMessageById(int id);
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     void insertSingleMessage(MessageEntry message);
 
     @Update(onConflict = OnConflictStrategy.REPLACE)

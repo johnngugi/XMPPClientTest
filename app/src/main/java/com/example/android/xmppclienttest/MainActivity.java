@@ -18,10 +18,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
 import com.example.android.xmppclienttest.sync.ConnectionService;
+import com.example.android.xmppclienttest.sync.MessageUtilities;
 
 import java.util.List;
 
@@ -31,6 +33,7 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
     private CustomItemAdapter mAdapter;
     private TextView mEmptyStateTextView;
     private RecyclerView mRecyclerView;
+    private Intent mForegroundService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,20 +61,19 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
         boolean isConnected = isConnectedToWifi();
 
         if (isConnected) {
-            Intent backgroundService = new Intent(this, ConnectionService.class);
-            startService(backgroundService);
+            mForegroundService = new Intent(this, ConnectionService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                mForegroundService.setAction(ConnectionService.ACTION_START_FOREGROUND_SERVICE);
+                startService(mForegroundService);
+            } else {
+                startService(mForegroundService);
+            }
         } else {
-//            // Otherwise, display error
-//            // First, hide loading indicator so error message will be visible
-//            View loadingIndicator = findViewById(R.id.loading_indicator);
-//            loadingIndicator.setVisibility(View.GONE);
-
             // Update empty state with no connection error message
-            mRecyclerView.setVisibility(View.GONE);
-            mEmptyStateTextView.setText(R.string.no_wifi_connection);
+            Toast.makeText(this, getString(R.string.no_wifi_connection), Toast.LENGTH_LONG).show();
         }
 
-//        MessageUtilities.scheduleRetrieveNewMessages(this);
+        MessageUtilities.scheduleRetrieveNewMessages(this);
     }
 
     private boolean isConnectedToWifi() {
@@ -121,6 +123,13 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
     }
 
     @Override
+    protected void onDestroy() {
+        mForegroundService.setAction(ConnectionService.ACTION_STOP_FOREGROUND_SERVICE);
+        startService(mForegroundService);
+        super.onDestroy();
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu options from the res/menu/menu_main.xml file.
         // This adds menu items to the app bar.
@@ -147,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
     private void insertMessage() {
         final String title = "Test";
         final String description = "Lorem ipsum dolor sit amet";
-        final MessageEntry message = new MessageEntry(title, description);
+        final MessageEntry message = new MessageEntry(title, description, "hfdkd");
 
         AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
             @Override

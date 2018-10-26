@@ -19,6 +19,7 @@ public class NotificationUtils {
     private static final int NEW_EVENT_PENDING_INTENT_ID = 3417;
 
     private static final String NEW_EVENT_NOTIFICATION_CHANNEL_ID = "event_notification_channel";
+    private static final String EVENT_NOTIFICATION_SERVICE_CHANNEL_ID = "event_notification_service_channel";
 
     private static final String TAG = NotificationUtils.class.getSimpleName();
 
@@ -58,5 +59,30 @@ public class NotificationUtils {
                 NEW_EVENT_PENDING_INTENT_ID,
                 startActivityIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    public static Notification getForegroundServiceIntent(Context context) {
+        NotificationManager notificationManager = (NotificationManager)
+                context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationChannel mChannel = new NotificationChannel(
+                EVENT_NOTIFICATION_SERVICE_CHANNEL_ID,
+                context.getString(R.string.notification_service_channel_name),
+                NotificationManager.IMPORTANCE_HIGH);
+        notificationManager.createNotificationChannel(mChannel);
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(
+                context, EVENT_NOTIFICATION_SERVICE_CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(context.getString(R.string.notification_service_channel_title))
+                .setContentText(context.getString(R.string.notification_service_channel_body))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(
+                        context.getString(R.string.notification_service_channel_name)))
+                .setContentIntent(contentIntent(context))
+                .setAutoCancel(true);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+                && Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            notificationBuilder.setPriority(NotificationCompat.PRIORITY_MAX);
+        }
+        return notificationBuilder.build();
     }
 }

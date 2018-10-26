@@ -16,4 +16,7 @@
     <string name="remote_host_address_key">remote_host_address_key</string>
     <string name="no_wifi_connection">No WIFI connection</string>
     <string name="No_messages">No messages</string>
+    <string name="notification_service_channel_name">notification service</string>
+    <string name="notification_service_channel_title">Noti-fy</string>
+    <string name="notification_service_channel_body">Checking new messages</string>
 </resources>

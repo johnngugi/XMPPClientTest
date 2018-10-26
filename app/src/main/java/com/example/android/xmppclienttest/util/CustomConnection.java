@@ -4,9 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.example.android.xmppclienttest.ApplicationContextProvider;
-import com.example.android.xmppclienttest.database.MessageEntry;
 import com.example.android.xmppclienttest.sync.ConnectionService;
-import com.example.android.xmppclienttest.sync.Tasks;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.ConnectionListener;
@@ -18,14 +16,11 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smackx.iqregister.AccountManager;
-import org.jivesoftware.smackx.pubsub.ItemPublishEvent;
 import org.jivesoftware.smackx.pubsub.LeafNode;
-import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
 import org.jivesoftware.smackx.pubsub.Subscription;
 import org.jivesoftware.smackx.pubsub.listener.ItemEventListener;
 import org.jxmpp.jid.parts.Localpart;
-import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -44,7 +39,7 @@ public class CustomConnection implements ConnectionListener {
 
     private static CustomConnection sInstance;
     private static XMPPTCPConnection connection;
-    private static String DEFAULT_REMOTE_HOST_ADDRESS = "10.50.4.141";
+    private static String DEFAULT_REMOTE_HOST_ADDRESS = "10.51.5.188";
 
     private InetAddress mHostAddress;
     private String mUsername;
@@ -54,6 +49,7 @@ public class CustomConnection implements ConnectionListener {
     private String mUserJidResource;
 
     private XMPPTCPConnectionConfiguration.Builder connectionConfiguration;
+    private LeafNode mEventNode;
 
     public static String getDefaultRemoteHostAddress() {
         return DEFAULT_REMOTE_HOST_ADDRESS;
@@ -65,6 +61,10 @@ public class CustomConnection implements ConnectionListener {
 
     public static String getDefaultUserSubscription() {
         return DEFAULT_USER_SUBSCRIPTION;
+    }
+
+    public LeafNode getNode() {
+        return mEventNode;
     }
 
     public enum ConnectionState {
@@ -172,16 +172,16 @@ public class CustomConnection implements ConnectionListener {
 
         try {
             connection.connect();
+            connection.login();
         } catch (SmackException.ConnectionException e) {
-            e.getFailedAddresses();
+            e.printStackTrace();
         }
-        connection.login();
 
         ReconnectionManager.setEnabledPerDefault(true);
         ReconnectionManager reconnectionManager = ReconnectionManager.getInstanceFor(connection);
         reconnectionManager.enableAutomaticReconnection();
 
-        subscribe();
+//        subscribe();
     }
 
     private boolean checkAndSetResourceName(Context context) {
@@ -204,22 +204,24 @@ public class CustomConnection implements ConnectionListener {
         connection = null;
     }
 
-    private void subscribe() {
+    public void subscribe(ItemEventListener eventListener) {
         Log.d(TAG, "subscribe()");
         Context context = ApplicationContextProvider.getContext();
         try {
             if (connection != null) {
-                PublishItemEventListener eventListener = new PublishItemEventListener();
+//                PublishItemEventListener eventListener = new PublishItemEventListener();
                 PubSubManager pubSubManager = PubSubManager.getInstance(connection);
-                LeafNode eventNode = pubSubManager.getNode("testNode");
-                eventNode.addItemEventListener(eventListener);
+                mEventNode = pubSubManager.getNode("testNode");
+                if (eventListener != null) {
+                    mEventNode.addItemEventListener(eventListener);
+                }
                 String user = connection.getUser().getLocalpart().asUnescapedString();
 
                 if (!PreferenceUtilities.checkSubIdIsSet(context)) {
                     System.out.println("Sub id not set");
                     if (!DEFAULT_USER_NAME.equals(user)) {
                         Subscription subscription =
-                                eventNode.subscribe(String.valueOf(connection.getUser()));
+                                mEventNode.subscribe(String.valueOf(connection.getUser()));
                         PreferenceUtilities.saveSubscriptionId(subscription.getId());
                     }
                 }
@@ -255,26 +257,5 @@ public class CustomConnection implements ConnectionListener {
 
     public XMPPTCPConnection getXmppTcpConnection() {
         return connection;
-    }
-
-    private class PublishItemEventListener implements ItemEventListener {
-        MessageParser parser = new MessageParser();
-
-        @Override
-        public void handlePublishedItems(ItemPublishEvent items) {
-            Log.d(TAG, "event published");
-            for (Object obj : items.getItems()) {
-                PayloadItem item = (PayloadItem) obj;
-                String payloadMessage = parser.retreiveXmlString(item.getPayload().toString());
-                System.out.println("Payload message: " + payloadMessage);
-                try {
-                    MessageEntry messageEntry = parser.parseContent(payloadMessage);
-                    Tasks.addEvent(ApplicationContextProvider.getContext(), messageEntry);
-                    System.out.println("Parsed message: " + messageEntry.getBody());
-                } catch (XmlPullParserException | IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 }

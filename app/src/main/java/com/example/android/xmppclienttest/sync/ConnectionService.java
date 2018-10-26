@@ -1,20 +1,33 @@
 package com.example.android.xmppclienttest.sync;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 
+import com.example.android.xmppclienttest.ApplicationContextProvider;
+import com.example.android.xmppclienttest.database.MessageEntry;
 import com.example.android.xmppclienttest.util.CustomConnection;
+import com.example.android.xmppclienttest.util.MessageParser;
+import com.example.android.xmppclienttest.util.NotificationUtils;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smackx.pubsub.ItemPublishEvent;
+import org.jivesoftware.smackx.pubsub.PayloadItem;
+import org.jivesoftware.smackx.pubsub.listener.ItemEventListener;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 
 public class ConnectionService extends Service {
+
+    public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
+    public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
 
     private static final String TAG = ConnectionService.class.getSimpleName();
     private static final Object LOCK = new Object();
@@ -23,7 +36,7 @@ public class ConnectionService extends Service {
     public static CustomConnection.LoggedInState sLoggedInState;
     public static CustomConnection mConnection;
 
-    public static final String HOST_ADDRESS = "10.50.4.141";
+    public static final String HOST_ADDRESS = "10.51.5.188";
 
     private boolean mActive;//Stores whether or not the thread is active
     private Thread mThread;
@@ -44,8 +57,41 @@ public class ConnectionService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand()");
-        start();
-        return Service.START_STICKY;
+
+        if (intent != null) {
+            String action = intent.getAction();
+            switch (action) {
+                case ACTION_START_FOREGROUND_SERVICE:
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService();
+                    }
+                    start();
+                    break;
+                case ACTION_STOP_FOREGROUND_SERVICE:
+                    stop();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        stopForegroundService();
+                    }
+                    break;
+            }
+        }
+        return Service.START_NOT_STICKY;
+    }
+
+    private void startForegroundService() {
+        Log.d(TAG, "Start foreground service.");
+        Notification notification = NotificationUtils.getForegroundServiceIntent(this);
+        startForeground(1, notification);
+    }
+
+    private void stopForegroundService() {
+        Log.d(TAG, "Stop foreground service.");
+
+        // Stop foreground service and remove the notification.
+        stopForeground(true);
+
+        // Stop the foreground service.
+        stopSelf();
     }
 
     @Override
@@ -80,6 +126,7 @@ public class ConnectionService extends Service {
                 mConnection = CustomConnection.getInstance(this, HOST_ADDRESS);
                 try {
                     mConnection.connect();
+                    mConnection.subscribe(new PublishItemEventListener());
                 } catch (IOException | InterruptedException | XMPPException | SmackException e) {
                     Log.d(TAG,
                             "Something went wrong while connecting, " +
@@ -120,5 +167,26 @@ public class ConnectionService extends Service {
 
     public static CustomConnection getConnection() {
         return mConnection;
+    }
+
+    private class PublishItemEventListener implements ItemEventListener {
+        MessageParser parser = new MessageParser();
+
+        @Override
+        public void handlePublishedItems(ItemPublishEvent items) {
+            Log.d(TAG, "event published");
+            for (Object obj : items.getItems()) {
+                PayloadItem item = (PayloadItem) obj;
+                String payloadMessage = parser.retreiveXmlString(item.getPayload().toString());
+                System.out.println("Payload message: " + payloadMessage);
+                try {
+                    MessageEntry messageEntry = parser.parseContent(payloadMessage);
+                    Tasks.addEvent(ApplicationContextProvider.getContext(), messageEntry);
+                    System.out.println("Parsed message: " + messageEntry.getBody());
+                } catch (XmlPullParserException | IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }

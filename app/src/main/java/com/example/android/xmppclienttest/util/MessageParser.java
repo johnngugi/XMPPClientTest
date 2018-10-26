@@ -50,6 +50,7 @@ public class MessageParser {
 
     private MessageEntry readMessage(XmlPullParser parser) throws IOException, XmlPullParserException {
         parser.require(XmlPullParser.START_TAG, ns, "message");
+        String id = parser.getAttributeValue(null, "id");
         String subject = null;
         String body = null;
         String file = null;
@@ -74,7 +75,7 @@ public class MessageParser {
                     break;
             }
         }
-        MessageEntry messageEntry = new MessageEntry(subject, body);
+        MessageEntry messageEntry = new MessageEntry(subject, body, id);
         messageEntry.setFilePath(file);
         return messageEntry;
     }
