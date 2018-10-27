@@ -61,7 +61,7 @@ public class MessageUtilities {
         sInitialised = true;
     }
 
-    synchronized public static void fetchNewEvent(Context context, String hostAddress) {
+    synchronized static void fetchNewEvent(Context context, String hostAddress) {
         MessageParser parser = new MessageParser();
         CustomConnection connection = CustomConnection.getInstance(context, hostAddress);
         try {

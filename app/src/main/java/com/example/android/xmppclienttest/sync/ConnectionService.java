@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.example.android.xmppclienttest.ApplicationContextProvider;
@@ -28,6 +29,9 @@ public class ConnectionService extends Service {
 
     public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
+
+    public static final String SERVER_NOT_FOUND = "com.example.android.xmppclienttest.servernotfound";
+    public static final String SERVER_CONNECTIVITY = "com.example.android.xmppclienttest.server_connectivity";
 
     private static final String TAG = ConnectionService.class.getSimpleName();
     private static final Object LOCK = new Object();
@@ -128,7 +132,9 @@ public class ConnectionService extends Service {
                     mConnection.connect();
                     mConnection.subscribe(new PublishItemEventListener());
                 } catch (SmackException.ConnectionException e) {
-                    System.out.println("Server not found");
+                    Intent intent = new Intent(ConnectionService.SERVER_NOT_FOUND);
+                    intent.setPackage(ApplicationContextProvider.getContext().getPackageName());
+                    ApplicationContextProvider.getContext().sendBroadcast(intent);
                 } catch (IOException | InterruptedException | XMPPException | SmackException e) {
                     Log.d(TAG,
                             "Something went wrong while connecting, " +

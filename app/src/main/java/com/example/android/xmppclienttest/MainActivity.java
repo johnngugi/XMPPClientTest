@@ -2,8 +2,10 @@ package com.example.android.xmppclienttest;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
@@ -18,7 +20,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
@@ -34,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
     private TextView mEmptyStateTextView;
     private RecyclerView mRecyclerView;
     private Intent mForegroundService;
+    private ServerNotFoundBroadcastReceiver mServerConnectivityReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,11 +58,11 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
         mEmptyStateTextView = findViewById(R.id.empty_view);
 
         mDb = AppDatabase.getInstance(getApplicationContext());
-        setupViewModel();
 
         boolean isConnected = isConnectedToWifi();
 
         if (isConnected) {
+            setupViewModel();
             mForegroundService = new Intent(this, ConnectionService.class);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 mForegroundService.setAction(ConnectionService.ACTION_START_FOREGROUND_SERVICE);
@@ -70,10 +72,14 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
             }
         } else {
             // Update empty state with no connection error message
-            Toast.makeText(this, getString(R.string.no_wifi_connection), Toast.LENGTH_LONG).show();
+            mRecyclerView.setVisibility(View.GONE);
+            mEmptyStateTextView.setVisibility(View.VISIBLE);
+            mEmptyStateTextView.setText(getString(R.string.no_wifi_connection));
         }
 
         MessageUtilities.scheduleRetrieveNewMessages(this);
+
+        mServerConnectivityReceiver = new ServerNotFoundBroadcastReceiver();
     }
 
     private boolean isConnectedToWifi() {
@@ -115,11 +121,15 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
     @Override
     protected void onResume() {
         super.onResume();
+
+        IntentFilter filter = new IntentFilter(ConnectionService.SERVER_NOT_FOUND);
+        registerReceiver(mServerConnectivityReceiver, filter);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        unregisterReceiver(mServerConnectivityReceiver);
     }
 
     @Override
@@ -181,5 +191,21 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
         Intent intent = new Intent(MainActivity.this, MessageDetailActivity.class);
         intent.putExtra(MessageDetailActivity.EXTRA_MESSAGE_ID, itemId);
         startActivity(intent);
+    }
+
+    private class ServerNotFoundBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(ConnectionService.SERVER_NOT_FOUND)) {
+                showError();
+            }
+        }
+    }
+
+    private void showError() {
+        mRecyclerView.setVisibility(View.GONE);
+        mEmptyStateTextView.setVisibility(View.VISIBLE);
+        mEmptyStateTextView.setText(getString(R.string.server_not_foun));
     }
 }

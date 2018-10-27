@@ -19,4 +19,5 @@
     <string name="notification_service_channel_name">notification service</string>
     <string name="notification_service_channel_title">Noti-fy</string>
     <string name="notification_service_channel_body">Checking new messages</string>
+    <string name="server_not_foun">Server not found. Please restart app</string>
 </resources>
