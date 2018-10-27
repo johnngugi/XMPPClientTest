@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
     protected void onResume() {
         super.onResume();
 
-        IntentFilter filter = new IntentFilter(ConnectionService.SERVER_NOT_FOUND);
+        IntentFilter filter = new IntentFilter(ConnectionService.ACTION_SERVER_NOT_FOUND);
         registerReceiver(mServerConnectivityReceiver, filter);
     }
 
@@ -197,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals(ConnectionService.SERVER_NOT_FOUND)) {
+            if (action.equals(ConnectionService.ACTION_SERVER_NOT_FOUND)) {
                 showError();
             }
         }

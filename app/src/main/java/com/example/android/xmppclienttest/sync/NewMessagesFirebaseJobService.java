@@ -3,7 +3,6 @@ package com.example.android.xmppclienttest.sync;
 import android.content.Context;
 import android.os.AsyncTask;
 
-import com.example.android.xmppclienttest.ApplicationContextProvider;
 import com.firebase.jobdispatcher.JobParameters;
 import com.firebase.jobdispatcher.JobService;
 
@@ -25,7 +24,7 @@ public class NewMessagesFirebaseJobService extends JobService {
     private class BackgroundAsyncTask extends AsyncTask<JobParameters, Void, JobParameters> {
         @Override
         protected JobParameters doInBackground(JobParameters... jobParameters) {
-            Context context = ApplicationContextProvider.getContext();
+            Context context = NewMessagesFirebaseJobService.this;
             Tasks.executeTask(context, Tasks.ACTION_FETCH_EVENT);
             return jobParameters[0];
         }

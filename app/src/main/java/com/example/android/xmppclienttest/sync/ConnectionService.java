@@ -2,12 +2,12 @@ package com.example.android.xmppclienttest.sync;
 
 import android.app.Notification;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.example.android.xmppclienttest.ApplicationContextProvider;
@@ -29,9 +29,7 @@ public class ConnectionService extends Service {
 
     public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
-
-    public static final String SERVER_NOT_FOUND = "com.example.android.xmppclienttest.servernotfound";
-    public static final String SERVER_CONNECTIVITY = "com.example.android.xmppclienttest.server_connectivity";
+    public static final String ACTION_SERVER_NOT_FOUND = "com.example.android.xmppclienttest.servernotfound";
 
     private static final String TAG = ConnectionService.class.getSimpleName();
     private static final Object LOCK = new Object();
@@ -40,7 +38,7 @@ public class ConnectionService extends Service {
     public static CustomConnection.LoggedInState sLoggedInState;
     public static CustomConnection mConnection;
 
-    public static final String HOST_ADDRESS = "10.51.5.188";
+    public static final String HOST_ADDRESS = "192.168.100.5";
 
     private boolean mActive;//Stores whether or not the thread is active
     private Thread mThread;
@@ -64,6 +62,7 @@ public class ConnectionService extends Service {
 
         if (intent != null) {
             String action = intent.getAction();
+            assert action != null;
             switch (action) {
                 case ACTION_START_FOREGROUND_SERVICE:
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -132,7 +131,7 @@ public class ConnectionService extends Service {
                     mConnection.connect();
                     mConnection.subscribe(new PublishItemEventListener());
                 } catch (SmackException.ConnectionException e) {
-                    Intent intent = new Intent(ConnectionService.SERVER_NOT_FOUND);
+                    Intent intent = new Intent(ConnectionService.ACTION_SERVER_NOT_FOUND);
                     intent.setPackage(ApplicationContextProvider.getContext().getPackageName());
                     ApplicationContextProvider.getContext().sendBroadcast(intent);
                 } catch (IOException | InterruptedException | XMPPException | SmackException e) {
@@ -188,8 +187,10 @@ public class ConnectionService extends Service {
                 String payloadMessage = parser.retreiveXmlString(item.getPayload().toString());
                 System.out.println("Payload message: " + payloadMessage);
                 try {
+                    Context context = ApplicationContextProvider.getContext();
                     MessageEntry messageEntry = parser.parseContent(payloadMessage);
-                    Tasks.addEvent(ApplicationContextProvider.getContext(), messageEntry);
+                    Tasks.addEvent(context, messageEntry);
+                    NotificationUtils.alertUserAboutNewEvent(context);
                     System.out.println("Parsed message: " + messageEntry.getBody());
                 } catch (XmlPullParserException | IOException e) {
                     e.printStackTrace();

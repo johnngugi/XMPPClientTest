@@ -39,7 +39,7 @@ public class CustomConnection implements ConnectionListener {
 
     private static CustomConnection sInstance;
     private static XMPPTCPConnection connection;
-    private static String DEFAULT_REMOTE_HOST_ADDRESS = "10.51.5.188";
+    private static String DEFAULT_REMOTE_HOST_ADDRESS = "192.168.100.5";
 
     private InetAddress mHostAddress;
     private String mUsername;
@@ -51,20 +51,16 @@ public class CustomConnection implements ConnectionListener {
     private XMPPTCPConnectionConfiguration.Builder connectionConfiguration;
     private LeafNode mEventNode;
 
-    public static String getDefaultRemoteHostAddress() {
+    static String getDefaultRemoteHostAddress() {
         return DEFAULT_REMOTE_HOST_ADDRESS;
     }
 
-    public static String getDefaultUserName() {
+    static String getDefaultUserName() {
         return DEFAULT_USER_NAME;
     }
 
-    public static String getDefaultUserSubscription() {
+    static String getDefaultUserSubscription() {
         return DEFAULT_USER_SUBSCRIPTION;
-    }
-
-    public LeafNode getNode() {
-        return mEventNode;
     }
 
     public enum ConnectionState {
@@ -253,5 +249,9 @@ public class CustomConnection implements ConnectionListener {
 
     public XMPPTCPConnection getXmppTcpConnection() {
         return connection;
+    }
+
+    public LeafNode getNode() {
+        return mEventNode;
     }
 }

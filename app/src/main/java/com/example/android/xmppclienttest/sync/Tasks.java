@@ -28,6 +28,5 @@ public class Tasks {
                 db.messageDao().insertSingleMessage(messageEntry);
             }
         });
-        NotificationUtils.alertUserAboutNewEvent(context);
     }
 }

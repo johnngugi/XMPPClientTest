@@ -4,10 +4,10 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.example.android.xmppclienttest.ApplicationContextProvider;
 import com.example.android.xmppclienttest.database.MessageEntry;
 import com.example.android.xmppclienttest.util.CustomConnection;
 import com.example.android.xmppclienttest.util.MessageParser;
+import com.example.android.xmppclienttest.util.NotificationUtils;
 import com.firebase.jobdispatcher.Constraint;
 import com.firebase.jobdispatcher.Driver;
 import com.firebase.jobdispatcher.FirebaseJobDispatcher;
@@ -67,15 +67,16 @@ public class MessageUtilities {
         try {
             connection.connect();
             Log.d(TAG, "background service connecting");
-//            node.subscribe(String.valueOf(connection.getXmppTcpConnection().getUser()));
             connection.subscribe(null);
             LeafNode node = connection.getNode();
-            List<PayloadItem> items = node.getItems(1);
+            List<PayloadItem> items = node.getItems(2);
             if (items.size() > 0) {
-                PayloadItem item = items.get(0);
-                String payloadMessage = parser.retreiveXmlString(item.getPayload().toString());
-                MessageEntry messageEntry = parser.parseContent(payloadMessage);
-                Tasks.addEvent(ApplicationContextProvider.getContext(), messageEntry);
+                for (PayloadItem item : items) {
+                    String payloadMessage = parser.retreiveXmlString(item.getPayload().toString());
+                    MessageEntry messageEntry = parser.parseContent(payloadMessage);
+                    Tasks.addEvent(context, messageEntry);
+                    NotificationUtils.alertUserAboutNewEvent(context);
+                }
             }
             connection.disconnect();
         } catch (InterruptedException e) {
