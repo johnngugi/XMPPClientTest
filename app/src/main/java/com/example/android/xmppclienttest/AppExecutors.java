@@ -15,13 +15,13 @@ public class AppExecutors {
     private final Executor mainThread;
     private final Executor networkIO;
 
-    public AppExecutors(Executor diskIO, Executor mainThread, Executor networkIO) {
+    private AppExecutors(Executor diskIO, Executor networkIO, Executor mainThread) {
         this.diskIO = diskIO;
-        this.mainThread = mainThread;
         this.networkIO = networkIO;
+        this.mainThread = mainThread;
     }
 
-    public static AppExecutors getsInstance() {
+    public static AppExecutors getInstance() {
         if (sInstance == null) {
             synchronized (LOCK) {
                 sInstance = new AppExecutors(Executors.newSingleThreadExecutor(),

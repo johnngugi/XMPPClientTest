@@ -2,7 +2,15 @@ package com.example.android.xmppclienttest;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -11,10 +19,13 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
 import com.example.android.xmppclienttest.sync.ConnectionService;
+import com.example.android.xmppclienttest.sync.MessageUtilities;
 
 import java.util.List;
 
@@ -22,30 +33,76 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
 
     private AppDatabase mDb;
     private CustomItemAdapter mAdapter;
+    private TextView mEmptyStateTextView;
+    private RecyclerView mRecyclerView;
+    private Intent mForegroundService;
+    private ServerNotFoundBroadcastReceiver mServerConnectivityReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
-        RecyclerView recyclerView = findViewById(R.id.rv_numbers);
-        recyclerView.setHasFixedSize(true);
+        mRecyclerView = findViewById(R.id.rv_numbers);
+        mRecyclerView.setHasFixedSize(true);
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
+        mRecyclerView.setLayoutManager(layoutManager);
 
         mAdapter = new CustomItemAdapter(this, this);
-        recyclerView.setAdapter(mAdapter);
+        mRecyclerView.setAdapter(mAdapter);
+
+        mEmptyStateTextView = findViewById(R.id.empty_view);
 
         mDb = AppDatabase.getInstance(getApplicationContext());
-        setupViewModel();
 
-        Intent backgroundService = new Intent(this, ConnectionService.class);
-        startService(backgroundService);
+        /* Setup the shared preference listener */
+        ConnectionPreferenceChangeListener preferenceChangeListener =
+                new ConnectionPreferenceChangeListener();
+        String sharedPrefsFile = getString(R.string.shared_preference_file);
+        System.out.println("Shared prefs file: " + sharedPrefsFile);
+        SharedPreferences prefs = getSharedPreferences(sharedPrefsFile, Context.MODE_PRIVATE);
+        prefs.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
+
+        boolean isConnected = isConnectedToWifi();
+
+        if (isConnected) {
+            setupViewModel();
+            mForegroundService = new Intent(this, ConnectionService.class);
+            mForegroundService.setAction(ConnectionService.ACTION_START_FOREGROUND_SERVICE);
+            startService(mForegroundService);
+        } else {
+            // Update empty state with no connection error message
+            mRecyclerView.setVisibility(View.GONE);
+            mEmptyStateTextView.setVisibility(View.VISIBLE);
+            mEmptyStateTextView.setText(getString(R.string.no_wifi_connection));
+        }
+
+        MessageUtilities.scheduleRetrieveNewMessages(this);
+
+        mServerConnectivityReceiver = new ServerNotFoundBroadcastReceiver();
+    }
+
+    private boolean isConnectedToWifi() {
+        ConnectivityManager cm =
+                (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            NetworkCapabilities networkCapabilities = cm.getNetworkCapabilities(cm.getActiveNetwork());
+            isConnected =
+                    isConnected &&
+                            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+        } else {
+            isConnected = isConnected && activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
+        }
+        return isConnected;
     }
 
     private void setupViewModel() {
@@ -54,6 +111,14 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
             @Override
             public void onChanged(@Nullable List<MessageEntry> messageEntries) {
                 mAdapter.setMessages(messageEntries);
+                if (mAdapter.getItemCount() == 0) {
+                    mRecyclerView.setVisibility(View.GONE);
+                    mEmptyStateTextView.setVisibility(View.VISIBLE);
+                } else {
+                    mRecyclerView.setVisibility(View.VISIBLE);
+                    mEmptyStateTextView.setText(R.string.No_messages);
+                    mEmptyStateTextView.setVisibility(View.GONE);
+                }
             }
         });
     }
@@ -61,11 +126,22 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
     @Override
     protected void onResume() {
         super.onResume();
+
+        IntentFilter filter = new IntentFilter(ConnectionService.ACTION_SERVER_NOT_FOUND);
+        registerReceiver(mServerConnectivityReceiver, filter);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        unregisterReceiver(mServerConnectivityReceiver);
+    }
+
+    @Override
+    protected void onDestroy() {
+        mForegroundService.setAction(ConnectionService.ACTION_STOP_FOREGROUND_SERVICE);
+        startService(mForegroundService);
+        super.onDestroy();
     }
 
     @Override
@@ -88,6 +164,11 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
             case R.id.action_delete_all_entries:
                 deleteMessages();
                 return true;
+            // Launch the settings activity
+            case R.id.action_settings_activity:
+                Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                startActivity(intent);
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -95,9 +176,9 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
     private void insertMessage() {
         final String title = "Test";
         final String description = "Lorem ipsum dolor sit amet";
-        final MessageEntry message = new MessageEntry(title, description);
+        final MessageEntry message = new MessageEntry(title, description, "hfdkd");
 
-        AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
+        AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
             @Override
             public void run() {
                 mDb.messageDao().insertSingleMessage(message);
@@ -106,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
     }
 
     private void deleteMessages() {
-        AppExecutors.getsInstance().getDiskIO().execute(new Runnable() {
+        AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
             @Override
             public void run() {
                 mDb.messageDao().deleteAllMessages();
@@ -116,10 +197,45 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
 
     @Override
     public void onItemClickListener(int itemId) {
-        // TODO: start MessageDetailActivity
         // Launch MessageDetailActivity adding the itemId as an extra in the intent
         Intent intent = new Intent(MainActivity.this, MessageDetailActivity.class);
         intent.putExtra(MessageDetailActivity.EXTRA_MESSAGE_ID, itemId);
         startActivity(intent);
+    }
+
+    private class ServerNotFoundBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            assert action != null;
+            if (action.equals(ConnectionService.ACTION_SERVER_NOT_FOUND)) {
+                showError();
+            }
+        }
+    }
+
+    private void showError() {
+        mRecyclerView.setVisibility(View.GONE);
+        mEmptyStateTextView.setVisibility(View.VISIBLE);
+        mEmptyStateTextView.setText(getString(R.string.server_not_found));
+    }
+
+    private class ConnectionPreferenceChangeListener implements
+            SharedPreferences.OnSharedPreferenceChangeListener {
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            if (key.equals(getString(R.string.remote_host_address_key))) {
+                String address = sharedPreferences.getString(getString(R.string.remote_host_address_key), null);
+                System.out.println("New address: ----------------------" + address);
+                if (mForegroundService != null) {
+                    mForegroundService.setAction(ConnectionService.ACTION_RESTART_FOREGROUND_SERVICE);
+                    startService(mForegroundService);
+                    mForegroundService = null;
+                    mForegroundService = new Intent(MainActivity.this, ConnectionService.class);
+                    mForegroundService.setAction(ConnectionService.ACTION_START_FOREGROUND_SERVICE);
+                    startService(mForegroundService);
+                }
+            }
+        }
     }
 }

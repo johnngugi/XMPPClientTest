@@ -20,7 +20,7 @@ public class MainViewModel extends AndroidViewModel {
         messages = appDatabase.messageDao().loadAllMessages();
     }
 
-    public LiveData<List<MessageEntry>> getMessages() {
+    LiveData<List<MessageEntry>> getMessages() {
         return messages;
     }
 }

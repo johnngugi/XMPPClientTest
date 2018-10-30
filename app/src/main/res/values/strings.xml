@@ -1,16 +1,102 @@
 <resources>
+    <!--Application name-->
     <string name="app_name">XMPPClientTest</string>
+
+    <!--Main activity options menu-->
     <string name="action_insert_dummy_data">Insert Dummy Data</string>
     <string name="action_delete_all_entries">Delete All Entries</string>
+    <string name="action_settings_activity">Settings</string>
+
+    <!--Strings related to notifications-->
     <string name="main_notification_channel_name">Primary</string>
     <string name="new_event_notification_title">New event</string>
     <string name="new_event_notification_body">Don\'t miss out</string>
+    <string name="notification_service_channel_name">notification service</string>
+    <string name="notification_service_channel_title">Noti-fy</string>
+    <string name="notification_service_channel_body">Checking new messages</string>
 
+    <!--shared preference keys-->
     <string name="user_resource_jid_key">user_resource_jid</string>
     <string name="broadcast_sub_id_key">broadcast_sub_id</string>
-    <string name="shared_preference_file">
-        com.example.android.xmppclienttest
-    </string>
+    <string name="remote_host_address_key">remote_host_address_key</string>
+    <string name="shared_preference_file">com.example.android.xmppclienttest</string>
+
+    <!--Activity text Strings-->
     <string name="long_latin">lorem ipsum dolor sit amet</string>
     <string name="contentImage">Headline image</string>
+    <string name="no_wifi_connection">No WIFI connection</string>
+    <string name="No_messages">No messages</string>
+    <string name="server_not_found">Server not found. Please restart app</string>
+
+    <!-- Strings related to Settings -->
+    <string name="title_activity_settings">Settings</string>
+
+    <string name="settings_server_ip_addr_default">10.51.5.188</string>
+
+    <string name="pref_title_social_recommendations">Enable social recommendations</string>
+    <string name="pref_description_social_recommendations">Recommendations for people to contact
+        based on your message history
+    </string>
+
+    <string name="pref_title_display_name">Display name</string>
+    <string name="pref_default_display_name">John Smith</string>
+
+    <string name="pref_title_add_friends_to_messages">Add friends to messages</string>
+    <string-array name="pref_example_list_titles">
+        <item>Always</item>
+        <item>When possible</item>
+        <item>Never</item>
+    </string-array>
+    <string-array name="pref_example_list_values">
+        <item>1</item>
+        <item>0</item>
+        <item>-1</item>
+    </string-array>
+
+    <!-- Example settings for Data & Sync -->
+    <string name="pref_header_data_sync">Data &amp; sync</string>
+
+    <string name="pref_title_sync_frequency">Sync frequency</string>
+    <string-array name="pref_sync_frequency_titles">
+        <item>15 minutes</item>
+        <item>30 minutes</item>
+        <item>1 hour</item>
+        <item>3 hours</item>
+        <item>6 hours</item>
+        <item>Never</item>
+    </string-array>
+    <string-array name="pref_sync_frequency_values">
+        <item>15</item>
+        <item>30</item>
+        <item>60</item>
+        <item>180</item>
+        <item>360</item>
+        <item>-1</item>
+    </string-array>
+
+    <string-array name="list_preference_entries">
+        <item>Entry 1</item>
+        <item>Entry 2</item>
+        <item>Entry 3</item>
+    </string-array>
+
+    <string-array name="list_preference_entry_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <string-array name="multi_select_list_preference_default_value" />
+
+    <string name="pref_title_system_sync_settings">System sync settings</string>
+
+    <!-- Example settings for Notifications -->
+    <string name="pref_header_notifications">Notifications</string>
+
+    <string name="pref_title_new_message_notifications">New message notifications</string>
+
+    <string name="pref_title_ringtone">Ringtone</string>
+    <string name="pref_ringtone_silent">Silent</string>
+
+    <string name="pref_title_vibrate">Vibrate</string>
 </resources>

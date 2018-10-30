@@ -34,8 +34,7 @@ public class MessageParser {
         return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
     }
 
-    // TODO (3) Change name from parseTest parseContent when finished
-    public MessageEntry parseTest(String rawXml) throws XmlPullParserException, IOException {
+    public MessageEntry parseContent(String rawXml) throws XmlPullParserException, IOException {
         InputStream stream = new ByteArrayInputStream(rawXml.getBytes());
 
         try {
@@ -51,6 +50,7 @@ public class MessageParser {
 
     private MessageEntry readMessage(XmlPullParser parser) throws IOException, XmlPullParserException {
         parser.require(XmlPullParser.START_TAG, ns, "message");
+        String id = parser.getAttributeValue(null, "id");
         String subject = null;
         String body = null;
         String file = null;
@@ -75,7 +75,7 @@ public class MessageParser {
                     break;
             }
         }
-        MessageEntry messageEntry = new MessageEntry(subject, body);
+        MessageEntry messageEntry = new MessageEntry(subject, body, id);
         messageEntry.setFilePath(file);
         return messageEntry;
     }
@@ -84,7 +84,7 @@ public class MessageParser {
         parser.require(XmlPullParser.START_TAG, ns, "file");
         String fileName = parser.getAttributeValue(null, "name");
         String fileSize = parser.getAttributeValue(null, "size");
-        Bitmap bitmapImage = null;
+        Bitmap bitmapImage;
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
