@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.example.android.xmppclienttest.ApplicationContextProvider;
+import com.example.android.xmppclienttest.R;
 import com.example.android.xmppclienttest.sync.ConnectionService;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
@@ -39,7 +40,6 @@ public class CustomConnection implements ConnectionListener {
 
     private static CustomConnection sInstance;
     private static XMPPTCPConnection connection;
-    private static String DEFAULT_REMOTE_HOST_ADDRESS = "192.168.100.5";
 
     private InetAddress mHostAddress;
     private String mUsername;
@@ -52,7 +52,8 @@ public class CustomConnection implements ConnectionListener {
     private LeafNode mEventNode;
 
     static String getDefaultRemoteHostAddress() {
-        return DEFAULT_REMOTE_HOST_ADDRESS;
+        return ApplicationContextProvider.getContext().getResources()
+                .getString(R.string.settings_server_ip_addr_default);
     }
 
     static String getDefaultUserName() {
@@ -122,6 +123,15 @@ public class CustomConnection implements ConnectionListener {
         }
     }
 
+    public void disconnect() {
+        Log.d(TAG, "Disconnecting from server " + mServiceName);
+        if (connection != null) {
+            connection.instantShutdown();
+        }
+        ConnectionService.sConnectionState = ConnectionState.DISCONNECTED;
+        connection = null;
+    }
+
     private boolean checkAndSetUsername(Context context) {
         boolean isUserNameSet = PreferenceUtilities.checkUserNameIsSet(context);
         if (isUserNameSet) {
@@ -165,6 +175,7 @@ public class CustomConnection implements ConnectionListener {
             throws SmackException, IOException, XMPPException, InterruptedException {
         connection = new XMPPTCPConnection(configuration.build());
         connection.addConnectionListener(this);
+        connection.setReplyTimeout(10000);
 
         connection.connect();
         connection.login();
@@ -185,15 +196,6 @@ public class CustomConnection implements ConnectionListener {
         }
 
         return isUserResourceSet;
-    }
-
-    public void disconnect() {
-        Log.d(TAG, "Disconnecting from server " + mServiceName);
-        if (connection != null) {
-            connection.disconnect();
-        }
-        ConnectionService.sConnectionState = ConnectionState.DISCONNECTED;
-        connection = null;
     }
 
     public void subscribe(ItemEventListener eventListener) {

@@ -15,6 +15,7 @@ import com.example.android.xmppclienttest.database.MessageEntry;
 import com.example.android.xmppclienttest.util.CustomConnection;
 import com.example.android.xmppclienttest.util.MessageParser;
 import com.example.android.xmppclienttest.util.NotificationUtils;
+import com.example.android.xmppclienttest.util.PreferenceUtilities;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
@@ -29,6 +30,7 @@ public class ConnectionService extends Service {
 
     public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
+    public static final String ACTION_RESTART_FOREGROUND_SERVICE = "ACTION_RESTART_FOREGROUND_SERVICE";
     public static final String ACTION_SERVER_NOT_FOUND = "com.example.android.xmppclienttest.servernotfound";
 
     private static final String TAG = ConnectionService.class.getSimpleName();
@@ -38,7 +40,7 @@ public class ConnectionService extends Service {
     public static CustomConnection.LoggedInState sLoggedInState;
     public static CustomConnection mConnection;
 
-    public static final String HOST_ADDRESS = "192.168.100.5";
+    private static String HOST_ADDRESS = null;
 
     private boolean mActive;//Stores whether or not the thread is active
     private Thread mThread;
@@ -71,11 +73,13 @@ public class ConnectionService extends Service {
                     start();
                     break;
                 case ACTION_STOP_FOREGROUND_SERVICE:
-                    stop();
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         stopForegroundService();
                     }
+                    stopSelf();
                     break;
+                case ACTION_RESTART_FOREGROUND_SERVICE:
+                    restart();
             }
         }
         return Service.START_NOT_STICKY;
@@ -92,9 +96,6 @@ public class ConnectionService extends Service {
 
         // Stop foreground service and remove the notification.
         stopForeground(true);
-
-        // Stop the foreground service.
-        stopSelf();
     }
 
     @Override
@@ -102,25 +103,6 @@ public class ConnectionService extends Service {
         Log.d(TAG, "onDestroy()");
         super.onDestroy();
         stop();
-    }
-
-    private void start() {
-        Log.d(TAG, " Service Start() function called.");
-        if (!mActive) {
-            mActive = true;
-            if (mThread == null || !mThread.isAlive()) {
-                mThread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Looper.prepare();
-                        mTHandler = new Handler();
-                        initConnection();
-                        Looper.loop();
-                    }
-                });
-                mThread.start();
-            }
-        }
     }
 
     public void initConnection() {
@@ -145,9 +127,28 @@ public class ConnectionService extends Service {
         }
     }
 
+    private void start() {
+        Log.d(TAG, " Service start() function called.");
+        HOST_ADDRESS = PreferenceUtilities.getSavedHostAddress(ApplicationContextProvider.getContext());
+        if (!mActive) {
+            mActive = true;
+            if (mThread == null || !mThread.isAlive()) {
+                mThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Looper.prepare();
+                        mTHandler = new Handler();
+                        initConnection();
+                        Looper.loop();
+                    }
+                });
+                mThread.start();
+            }
+        }
+    }
+
     public void stop() {
-        Log.d(TAG, "stop()");
-        mActive = false;
+        Log.d(TAG, "Service stop() function called.");
         mTHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -156,6 +157,20 @@ public class ConnectionService extends Service {
                 }
             }
         });
+        mActive = false;
+    }
+
+    private void restart() {
+        Log.d(TAG, "restart()");
+        boolean greaterThanOrEqualToO = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+        if (greaterThanOrEqualToO) {
+            stopForegroundService();
+        }
+        stop();
+        start();
+        if (greaterThanOrEqualToO) {
+            startForegroundService();
+        }
     }
 
     public static CustomConnection.ConnectionState getState() {

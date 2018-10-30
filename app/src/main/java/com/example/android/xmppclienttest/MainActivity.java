@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
@@ -59,17 +60,21 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
 
         mDb = AppDatabase.getInstance(getApplicationContext());
 
+        /* Setup the shared preference listener */
+        ConnectionPreferenceChangeListener preferenceChangeListener =
+                new ConnectionPreferenceChangeListener();
+        String sharedPrefsFile = getString(R.string.shared_preference_file);
+        System.out.println("Shared prefs file: " + sharedPrefsFile);
+        SharedPreferences prefs = getSharedPreferences(sharedPrefsFile, Context.MODE_PRIVATE);
+        prefs.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
+
         boolean isConnected = isConnectedToWifi();
 
         if (isConnected) {
             setupViewModel();
             mForegroundService = new Intent(this, ConnectionService.class);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                mForegroundService.setAction(ConnectionService.ACTION_START_FOREGROUND_SERVICE);
-                startService(mForegroundService);
-            } else {
-                startService(mForegroundService);
-            }
+            mForegroundService.setAction(ConnectionService.ACTION_START_FOREGROUND_SERVICE);
+            startService(mForegroundService);
         } else {
             // Update empty state with no connection error message
             mRecyclerView.setVisibility(View.GONE);
@@ -159,6 +164,11 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
             case R.id.action_delete_all_entries:
                 deleteMessages();
                 return true;
+            // Launch the settings activity
+            case R.id.action_settings_activity:
+                Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                startActivity(intent);
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -206,6 +216,25 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
     private void showError() {
         mRecyclerView.setVisibility(View.GONE);
         mEmptyStateTextView.setVisibility(View.VISIBLE);
-        mEmptyStateTextView.setText(getString(R.string.server_not_foun));
+        mEmptyStateTextView.setText(getString(R.string.server_not_found));
+    }
+
+    private class ConnectionPreferenceChangeListener implements
+            SharedPreferences.OnSharedPreferenceChangeListener {
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            if (key.equals(getString(R.string.remote_host_address_key))) {
+                String address = sharedPreferences.getString(getString(R.string.remote_host_address_key), null);
+                System.out.println("New address: ----------------------" + address);
+                if (mForegroundService != null) {
+                    mForegroundService.setAction(ConnectionService.ACTION_RESTART_FOREGROUND_SERVICE);
+                    startService(mForegroundService);
+                    mForegroundService = null;
+                    mForegroundService = new Intent(MainActivity.this, ConnectionService.class);
+                    mForegroundService.setAction(ConnectionService.ACTION_START_FOREGROUND_SERVICE);
+                    startService(mForegroundService);
+                }
+            }
+        }
     }
 }
