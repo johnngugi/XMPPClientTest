@@ -20,7 +20,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.It
 
     private Context mContext;
 
-    public CustomItemAdapter(Context context, ItemClickListener listener) {
+    CustomItemAdapter(Context context, ItemClickListener listener) {
         mContext = context;
         mItemClickListener = listener;
     }
@@ -56,7 +56,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.It
         return mMessages.size();
     }
 
-    public void setMessages(List<MessageEntry> messages) {
+    void setMessages(List<MessageEntry> messages) {
         mMessages = messages;
         notifyDataSetChanged();
     }
@@ -68,7 +68,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.It
     public class ItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView mItemTitle, mItemDescription;
 
-        public ItemViewHolder(@NonNull View itemView) {
+        ItemViewHolder(@NonNull View itemView) {
             super(itemView);
 
             mItemTitle = itemView.findViewById(R.id.tv_item_title);

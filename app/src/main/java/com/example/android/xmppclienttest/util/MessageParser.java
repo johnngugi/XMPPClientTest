@@ -84,7 +84,7 @@ public class MessageParser {
         parser.require(XmlPullParser.START_TAG, ns, "file");
         String fileName = parser.getAttributeValue(null, "name");
         String fileSize = parser.getAttributeValue(null, "size");
-        Bitmap bitmapImage = null;
+        Bitmap bitmapImage;
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;

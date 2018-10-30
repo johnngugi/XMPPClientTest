@@ -108,7 +108,7 @@ public class ConnectionService extends Service {
     public void initConnection() {
         if (mConnection == null) {
             synchronized (LOCK) {
-                mConnection = CustomConnection.getInstance(this, HOST_ADDRESS);
+                mConnection = CustomConnection.getInstance(HOST_ADDRESS);
                 try {
                     mConnection.connect();
                     mConnection.subscribe(new PublishItemEventListener());

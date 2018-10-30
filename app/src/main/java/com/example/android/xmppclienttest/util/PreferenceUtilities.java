@@ -64,7 +64,7 @@ public class PreferenceUtilities {
         SharedPreferences sharedPref = context.getSharedPreferences(
                 resourceNameKey, Context.MODE_PRIVATE);
 
-        return sharedPref.getString(userResourceJidKey, CustomConnection.getDefaultUserName());
+        return sharedPref.getString(userResourceJidKey, CustomConnection.getDefaultUserResource());
     }
 
     static String setUserResourceName(Context context, AbstractXMPPConnection connection) {

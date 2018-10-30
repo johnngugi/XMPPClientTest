@@ -41,12 +41,14 @@ public class MessageDetailFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        assert getArguments() != null;
         if (getArguments().containsKey(MessageDetailActivity.EXTRA_MESSAGE_ID)) {
             mMessageId = getArguments().getInt(MessageDetailActivity.EXTRA_MESSAGE_ID);
         }
 
         Activity activity = this.getActivity();
-        appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.collapsingToolbar);
+        assert activity != null;
+        appBarLayout = activity.findViewById(R.id.collapsingToolbar);
     }
 
     @Override

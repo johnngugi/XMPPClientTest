@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
@@ -207,6 +207,7 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            assert action != null;
             if (action.equals(ConnectionService.ACTION_SERVER_NOT_FOUND)) {
                 showError();
             }

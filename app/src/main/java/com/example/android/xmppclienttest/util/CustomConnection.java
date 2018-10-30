@@ -29,14 +29,11 @@ import java.net.UnknownHostException;
 
 public class CustomConnection implements ConnectionListener {
 
-    private static final String DEFAULT_USER_NAME = "student1";
-
     private static final String TAG = CustomConnection.class.getSimpleName();
+
+    private static final String DEFAULT_USER_NAME = "student1";
     private static final String DEFAULT_USER_RESOURCE = "strathmore-student";
     private static final String DEFAULT_USER_SUBSCRIPTION = "important";
-
-    private static final String PREF_UNIQUE_ID = "PREF_UNIQUE_ID";
-    private static String uniqueID = null;
 
     private static CustomConnection sInstance;
     private static XMPPTCPConnection connection;
@@ -64,6 +61,10 @@ public class CustomConnection implements ConnectionListener {
         return DEFAULT_USER_SUBSCRIPTION;
     }
 
+    static String getDefaultUserResource() {
+        return DEFAULT_USER_RESOURCE;
+    }
+
     public enum ConnectionState {
         CONNECTED, AUTHENTICATED, CONNECTING, DISCONNECTING, DISCONNECTED
     }
@@ -72,14 +73,14 @@ public class CustomConnection implements ConnectionListener {
         LOGGED_IN, LOGGED_OUT
     }
 
-    public static CustomConnection getInstance(Context context, String hostAddress) {
+    public static CustomConnection getInstance(String hostAddress) {
         if (sInstance == null) {
-            sInstance = new CustomConnection(context, hostAddress);
+            sInstance = new CustomConnection(hostAddress);
         }
         return sInstance;
     }
 
-    private CustomConnection(Context context, String hostAddress) {
+    private CustomConnection(String hostAddress) {
         // TODO (1) Change this, use the constructor instead
         mPassword = "password";
         mServiceName = "Testing";
@@ -143,8 +144,7 @@ public class CustomConnection implements ConnectionListener {
     private void createAccount(XMPPTCPConnectionConfiguration.Builder configuration, Context context)
             throws InterruptedException, XMPPException, SmackException, IOException {
         connectAndLogin(configuration);
-        uniqueID = PreferenceUtilities.getUniqueId(context);
-        mUsername = uniqueID;
+        mUsername = PreferenceUtilities.getUniqueId(context);
         mUserJidResource = PreferenceUtilities.setUserResourceName(context, connection);
 
         AccountManager accountManager = AccountManager.getInstance(connection);
@@ -247,10 +247,6 @@ public class CustomConnection implements ConnectionListener {
     public void connectionClosedOnError(Exception e) {
         ConnectionService.sConnectionState = ConnectionState.DISCONNECTED;
         Log.d(TAG, "ConnectionClosedOnError, error " + e.toString());
-    }
-
-    public XMPPTCPConnection getXmppTcpConnection() {
-        return connection;
     }
 
     public LeafNode getNode() {

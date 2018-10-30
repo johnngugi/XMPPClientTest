@@ -63,7 +63,7 @@ public class MessageUtilities {
 
     synchronized static void fetchNewEvent(Context context, String hostAddress) {
         MessageParser parser = new MessageParser();
-        CustomConnection connection = CustomConnection.getInstance(context, hostAddress);
+        CustomConnection connection = CustomConnection.getInstance(hostAddress);
         try {
             connection.connect();
             Log.d(TAG, "background service connecting");
