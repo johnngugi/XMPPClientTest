@@ -131,6 +131,9 @@ public class CustomConnection implements ConnectionListener {
         }
         ConnectionService.sConnectionState = ConnectionState.DISCONNECTED;
         connection = null;
+        synchronized (ConnectionService.getLock()) {
+            ConnectionService.getLock().notify();
+        }
     }
 
     private boolean checkAndSetUsername(Context context) {

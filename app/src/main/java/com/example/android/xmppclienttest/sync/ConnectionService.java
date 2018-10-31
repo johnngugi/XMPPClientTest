@@ -19,6 +19,7 @@ import com.example.android.xmppclienttest.util.PreferenceUtilities;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.sasl.SASLErrorException;
 import org.jivesoftware.smackx.pubsub.ItemPublishEvent;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.jivesoftware.smackx.pubsub.listener.ItemEventListener;
@@ -33,8 +34,9 @@ public class ConnectionService extends Service {
     public static final String ACTION_RESTART_FOREGROUND_SERVICE = "ACTION_RESTART_FOREGROUND_SERVICE";
     public static final String ACTION_SERVER_NOT_FOUND = "com.example.android.xmppclienttest.servernotfound";
 
-    private static final String TAG = ConnectionService.class.getSimpleName();
+
     private static final Object LOCK = new Object();
+    private static final String TAG = ConnectionService.class.getSimpleName();
 
     public static CustomConnection.ConnectionState sConnectionState;
     public static CustomConnection.LoggedInState sLoggedInState;
@@ -80,6 +82,7 @@ public class ConnectionService extends Service {
                     break;
                 case ACTION_RESTART_FOREGROUND_SERVICE:
                     restart();
+                    break;
             }
         }
         return Service.START_NOT_STICKY;
@@ -112,14 +115,16 @@ public class ConnectionService extends Service {
                 try {
                     mConnection.connect();
                     mConnection.subscribe(new PublishItemEventListener());
+                    Log.d(TAG, "Connection initalised");
                 } catch (SmackException.ConnectionException e) {
                     Intent intent = new Intent(ConnectionService.ACTION_SERVER_NOT_FOUND);
                     intent.setPackage(ApplicationContextProvider.getContext().getPackageName());
                     ApplicationContextProvider.getContext().sendBroadcast(intent);
+                    System.out.println("Server not found()");
+                } catch (SASLErrorException e) {
+                    Log.d(TAG, "Make sure the credentials are right and try again");
                 } catch (IOException | InterruptedException | XMPPException | SmackException e) {
-                    Log.d(TAG,
-                            "Something went wrong while connecting, " +
-                                    "make sure the credentials are right and try again");
+                    Log.d(TAG, "Something went wrong while connecting");
                     e.printStackTrace();
                     stopSelf();
                 }
@@ -129,35 +134,48 @@ public class ConnectionService extends Service {
 
     private void start() {
         Log.d(TAG, " Service start() function called.");
-        HOST_ADDRESS = PreferenceUtilities.getSavedHostAddress(ApplicationContextProvider.getContext());
-        if (!mActive) {
-            mActive = true;
-            if (mThread == null || !mThread.isAlive()) {
-                mThread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Looper.prepare();
-                        mTHandler = new Handler();
-                        initConnection();
-                        Looper.loop();
-                    }
-                });
-                mThread.start();
+        synchronized (LOCK) {
+            HOST_ADDRESS = PreferenceUtilities.getSavedHostAddress(ApplicationContextProvider.getContext());
+            if (!mActive) {
+                mActive = true;
+                if (mThread == null || !mThread.isAlive()) {
+                    mThread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Looper.prepare();
+                            mTHandler = new Handler();
+                            initConnection();
+                            Looper.loop();
+                        }
+                    });
+                    mThread.start();
+                }
             }
         }
     }
 
     public void stop() {
         Log.d(TAG, "Service stop() function called.");
-        mTHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (mConnection != null) {
-                    mConnection.disconnect();
+        if (mTHandler != null) {
+            mTHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (mConnection != null) {
+                        mConnection.disconnect();
+                    }
+                }
+            });
+            synchronized (LOCK) {
+                try {
+                    LOCK.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
-        });
-        mActive = false;
+            mThread.interrupt();
+            mThread = null;
+            mActive = false;
+        }
     }
 
     private void restart() {
@@ -167,10 +185,10 @@ public class ConnectionService extends Service {
             stopForegroundService();
         }
         stop();
-        start();
         if (greaterThanOrEqualToO) {
             startForegroundService();
         }
+        start();
     }
 
     public static CustomConnection.ConnectionState getState() {
@@ -189,6 +207,10 @@ public class ConnectionService extends Service {
 
     public static CustomConnection getConnection() {
         return mConnection;
+    }
+
+    public static Object getLock() {
+        return LOCK;
     }
 
     private class PublishItemEventListener implements ItemEventListener {
