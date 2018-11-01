@@ -179,16 +179,21 @@ public class ConnectionService extends Service {
     }
 
     private void restart() {
-        Log.d(TAG, "restart()");
-        boolean greaterThanOrEqualToO = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
-        if (greaterThanOrEqualToO) {
-            stopForegroundService();
-        }
-        stop();
-        if (greaterThanOrEqualToO) {
-            startForegroundService();
-        }
-        start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "restart()");
+                boolean greaterThanOrEqualToO = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+                if (greaterThanOrEqualToO) {
+                    stopForegroundService();
+                }
+                stop();
+                if (greaterThanOrEqualToO) {
+                    startForegroundService();
+                }
+                start();
+            }
+        }).start();
     }
 
     public static CustomConnection.ConnectionState getState() {
