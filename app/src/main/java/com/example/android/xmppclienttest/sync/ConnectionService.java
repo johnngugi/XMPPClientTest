@@ -33,6 +33,7 @@ public class ConnectionService extends Service {
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
     public static final String ACTION_RESTART_FOREGROUND_SERVICE = "ACTION_RESTART_FOREGROUND_SERVICE";
     public static final String ACTION_SERVER_NOT_FOUND = "com.example.android.xmppclienttest.servernotfound";
+    public static final String ACTION_SERVER_FOUND = "ACTION_SERVER_FOUND";
 
 
     private static final Object LOCK = new Object();
@@ -111,15 +112,16 @@ public class ConnectionService extends Service {
     public void initConnection() {
         if (mConnection == null) {
             synchronized (LOCK) {
+                HOST_ADDRESS = PreferenceUtilities.getSavedHostAddress(ApplicationContextProvider.getContext());
+                System.out.println("New host address--------------------" + HOST_ADDRESS);
                 mConnection = CustomConnection.getInstance(HOST_ADDRESS);
                 try {
                     mConnection.connect();
                     mConnection.subscribe(new PublishItemEventListener());
+                    sendConnectionBroadcast(ACTION_SERVER_FOUND);
                     Log.d(TAG, "Connection initalised");
                 } catch (SmackException.ConnectionException e) {
-                    Intent intent = new Intent(ConnectionService.ACTION_SERVER_NOT_FOUND);
-                    intent.setPackage(ApplicationContextProvider.getContext().getPackageName());
-                    ApplicationContextProvider.getContext().sendBroadcast(intent);
+                    sendConnectionBroadcast(ACTION_SERVER_NOT_FOUND);
                     System.out.println("Server not found()");
                 } catch (SASLErrorException e) {
                     Log.d(TAG, "Make sure the credentials are right and try again");
@@ -132,24 +134,28 @@ public class ConnectionService extends Service {
         }
     }
 
+    private void sendConnectionBroadcast(String action) {
+        Intent intent = new Intent(action);
+        intent.setPackage(ApplicationContextProvider.getContext().getPackageName());
+        ApplicationContextProvider.getContext().sendBroadcast(intent);
+    }
+
     private void start() {
         Log.d(TAG, " Service start() function called.");
-        synchronized (LOCK) {
-            HOST_ADDRESS = PreferenceUtilities.getSavedHostAddress(ApplicationContextProvider.getContext());
-            if (!mActive) {
-                mActive = true;
-                if (mThread == null || !mThread.isAlive()) {
-                    mThread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Looper.prepare();
-                            mTHandler = new Handler();
-                            initConnection();
-                            Looper.loop();
-                        }
-                    });
-                    mThread.start();
-                }
+        if (!mActive) {
+            mActive = true;
+            if (mThread == null || !mThread.isAlive()) {
+                mThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Looper.prepare();
+                        mTHandler = new Handler();
+                        System.out.println("running-------");
+                        initConnection();
+                        Looper.loop();
+                    }
+                });
+                mThread.start();
             }
         }
     }
@@ -162,38 +168,38 @@ public class ConnectionService extends Service {
                 public void run() {
                     if (mConnection != null) {
                         mConnection.disconnect();
+                        mConnection = null;
                     }
                 }
             });
-            synchronized (LOCK) {
-                try {
-                    LOCK.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            mThread.interrupt();
+//            mThread.interrupt();
             mThread = null;
             mActive = false;
+            HOST_ADDRESS = null;
         }
     }
 
     private void restart() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Log.d(TAG, "restart()");
-                boolean greaterThanOrEqualToO = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
-                if (greaterThanOrEqualToO) {
-                    stopForegroundService();
+        Log.d(TAG, "restart()");
+        if (mTHandler != null) {
+            mTHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (mConnection != null) {
+                        mConnection.disconnect();
+                        mConnection = null;
+                    }
+                    boolean greaterThanOrEqualToO = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+                    if (greaterThanOrEqualToO) {
+                        stopForegroundService();
+                    }
+                    if (greaterThanOrEqualToO) {
+                        startForegroundService();
+                    }
+                    initConnection();
                 }
-                stop();
-                if (greaterThanOrEqualToO) {
-                    startForegroundService();
-                }
-                start();
-            }
-        }).start();
+            });
+        }
     }
 
     public static CustomConnection.ConnectionState getState() {

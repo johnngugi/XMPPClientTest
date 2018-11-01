@@ -80,6 +80,7 @@ public class MessageUtilities {
                 }
             }
             Log.d(TAG, "Background service disconnecting");
+            connection.disconnect();
         } catch (SmackException.ConnectionException e) {
             Log.e(TAG, "Server not found()");
             e.printStackTrace();

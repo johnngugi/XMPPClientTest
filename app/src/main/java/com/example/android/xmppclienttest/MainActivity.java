@@ -217,6 +217,13 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
                 .show();
     }
 
+    private void showMessages() {
+        mRecyclerView.setVisibility(View.VISIBLE);
+        mEmptyStateTextView.setVisibility(View.GONE);
+        Snackbar.make(mEmptyStateTextView, R.string.server_found, Snackbar.LENGTH_LONG)
+                .show();
+    }
+
     private class ServerNotFoundBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -224,6 +231,8 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
             assert action != null;
             if (action.equals(ConnectionService.ACTION_SERVER_NOT_FOUND)) {
                 showError();
+            } else if (action.equals(ConnectionService.ACTION_SERVER_FOUND)) {
+                showMessages();
             }
         }
 
@@ -234,8 +243,6 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if (key.equals(getString(R.string.remote_host_address_key))) {
-                String address = sharedPreferences.getString(getString(R.string.remote_host_address_key), null);
-                System.out.println("New address: ----------------------" + address);
                 if (isConnected && mForegroundService != null) {
                     mForegroundService.setAction(ConnectionService.ACTION_RESTART_FOREGROUND_SERVICE);
                     startService(mForegroundService);
