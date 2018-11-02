@@ -13,6 +13,7 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -21,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.android.xmppclienttest.database.AppDatabase;
 import com.example.android.xmppclienttest.database.MessageEntry;
@@ -37,6 +39,9 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
     private RecyclerView mRecyclerView;
     private Intent mForegroundService;
     private ServerNotFoundBroadcastReceiver mServerConnectivityReceiver;
+    private SharedPreferences sharedPreferences;
+    private ConnectionPreferenceChangeListener preferenceChangeListener;
+    private boolean isConnected;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,26 +65,26 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
 
         mDb = AppDatabase.getInstance(getApplicationContext());
 
+        setupViewModel();
+
         /* Setup the shared preference listener */
-        ConnectionPreferenceChangeListener preferenceChangeListener =
-                new ConnectionPreferenceChangeListener();
+        preferenceChangeListener = new ConnectionPreferenceChangeListener();
         String sharedPrefsFile = getString(R.string.shared_preference_file);
-        System.out.println("Shared prefs file: " + sharedPrefsFile);
-        SharedPreferences prefs = getSharedPreferences(sharedPrefsFile, Context.MODE_PRIVATE);
-        prefs.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
+        sharedPreferences = getSharedPreferences(sharedPrefsFile, Context.MODE_PRIVATE);
+        sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
 
-        boolean isConnected = isConnectedToWifi();
+        isConnected = isConnectedToWifi();
 
+        mForegroundService = new Intent(this, ConnectionService.class);
         if (isConnected) {
-            setupViewModel();
-            mForegroundService = new Intent(this, ConnectionService.class);
             mForegroundService.setAction(ConnectionService.ACTION_START_FOREGROUND_SERVICE);
             startService(mForegroundService);
         } else {
             // Update empty state with no connection error message
             mRecyclerView.setVisibility(View.GONE);
-            mEmptyStateTextView.setVisibility(View.VISIBLE);
             mEmptyStateTextView.setText(getString(R.string.no_wifi_connection));
+            mEmptyStateTextView.setVisibility(View.VISIBLE);
+            Toast.makeText(this, "not connected to wifi", Toast.LENGTH_LONG).show();
         }
 
         MessageUtilities.scheduleRetrieveNewMessages(this);
@@ -113,10 +118,10 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
                 mAdapter.setMessages(messageEntries);
                 if (mAdapter.getItemCount() == 0) {
                     mRecyclerView.setVisibility(View.GONE);
+                    mEmptyStateTextView.setText(R.string.No_messages);
                     mEmptyStateTextView.setVisibility(View.VISIBLE);
                 } else {
                     mRecyclerView.setVisibility(View.VISIBLE);
-                    mEmptyStateTextView.setText(R.string.No_messages);
                     mEmptyStateTextView.setVisibility(View.GONE);
                 }
             }
@@ -139,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
 
     @Override
     protected void onDestroy() {
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceChangeListener);
         mForegroundService.setAction(ConnectionService.ACTION_STOP_FOREGROUND_SERVICE);
         startService(mForegroundService);
         super.onDestroy();
@@ -203,6 +209,21 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
         startActivity(intent);
     }
 
+    private void showError() {
+        mRecyclerView.setVisibility(View.GONE);
+        mEmptyStateTextView.setVisibility(View.VISIBLE);
+        mEmptyStateTextView.setText(getString(R.string.server_not_found));
+        Snackbar.make(mEmptyStateTextView, R.string.server_not_found, Snackbar.LENGTH_LONG)
+                .show();
+    }
+
+    private void showMessages() {
+        mRecyclerView.setVisibility(View.VISIBLE);
+        mEmptyStateTextView.setVisibility(View.GONE);
+        Snackbar.make(mEmptyStateTextView, R.string.server_found, Snackbar.LENGTH_LONG)
+                .show();
+    }
+
     private class ServerNotFoundBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -210,14 +231,11 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
             assert action != null;
             if (action.equals(ConnectionService.ACTION_SERVER_NOT_FOUND)) {
                 showError();
+            } else if (action.equals(ConnectionService.ACTION_SERVER_FOUND)) {
+                showMessages();
             }
         }
-    }
 
-    private void showError() {
-        mRecyclerView.setVisibility(View.GONE);
-        mEmptyStateTextView.setVisibility(View.VISIBLE);
-        mEmptyStateTextView.setText(getString(R.string.server_not_found));
     }
 
     private class ConnectionPreferenceChangeListener implements
@@ -225,14 +243,8 @@ public class MainActivity extends AppCompatActivity implements CustomItemAdapter
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if (key.equals(getString(R.string.remote_host_address_key))) {
-                String address = sharedPreferences.getString(getString(R.string.remote_host_address_key), null);
-                System.out.println("New address: ----------------------" + address);
-                if (mForegroundService != null) {
+                if (isConnected && mForegroundService != null) {
                     mForegroundService.setAction(ConnectionService.ACTION_RESTART_FOREGROUND_SERVICE);
-                    startService(mForegroundService);
-                    mForegroundService = null;
-                    mForegroundService = new Intent(MainActivity.this, ConnectionService.class);
-                    mForegroundService.setAction(ConnectionService.ACTION_START_FOREGROUND_SERVICE);
                     startService(mForegroundService);
                 }
             }

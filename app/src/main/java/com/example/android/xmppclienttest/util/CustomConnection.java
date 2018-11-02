@@ -127,10 +127,11 @@ public class CustomConnection implements ConnectionListener {
     public void disconnect() {
         Log.d(TAG, "Disconnecting from server " + mServiceName);
         if (connection != null) {
-            connection.instantShutdown();
+            connection.disconnect();
         }
         ConnectionService.sConnectionState = ConnectionState.DISCONNECTED;
         connection = null;
+        sInstance = null;
     }
 
     private boolean checkAndSetUsername(Context context) {

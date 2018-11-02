@@ -18,6 +18,7 @@ import com.firebase.jobdispatcher.Trigger;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.sasl.SASLErrorException;
 import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.PayloadItem;
 import org.xmlpull.v1.XmlPullParserException;
@@ -65,8 +66,8 @@ public class MessageUtilities {
         MessageParser parser = new MessageParser();
         CustomConnection connection = CustomConnection.getInstance(hostAddress);
         try {
+            Log.d(TAG, "Background service connecting");
             connection.connect();
-            Log.d(TAG, "background service connecting");
             connection.subscribe(null);
             LeafNode node = connection.getNode();
             List<PayloadItem> items = node.getItems(2);
@@ -78,16 +79,19 @@ public class MessageUtilities {
                     NotificationUtils.alertUserAboutNewEvent(context);
                 }
             }
+            Log.d(TAG, "Background service disconnecting");
             connection.disconnect();
-        } catch (InterruptedException e) {
+        } catch (SmackException.ConnectionException e) {
+            Log.e(TAG, "Server not found()");
             e.printStackTrace();
-        } catch (XMPPException e) {
+        } catch (SASLErrorException e) {
+            Log.d(TAG, "Make sure the credentials are right and try again");
             e.printStackTrace();
-        } catch (SmackException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException | XMPPException | SmackException e) {
+            Log.d(TAG, "Something went wrong while connecting");
             e.printStackTrace();
         } catch (XmlPullParserException e) {
+            Log.d(TAG, "Something went wrong while parsing the receive message");
             e.printStackTrace();
         }
     }

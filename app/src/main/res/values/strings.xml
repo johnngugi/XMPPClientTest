@@ -1,6 +1,6 @@
 <resources>
     <!--Application name-->
-    <string name="app_name">XMPPClientTest</string>
+    <string name="app_name">Noti-fi</string>
 
     <!--Main activity options menu-->
     <string name="action_insert_dummy_data">Insert Dummy Data</string>
@@ -99,4 +99,5 @@
     <string name="pref_ringtone_silent">Silent</string>
 
     <string name="pref_title_vibrate">Vibrate</string>
+    <string name="server_found">Server found</string>
 </resources>
