@@ -63,36 +63,40 @@ public class MessageUtilities {
     }
 
     synchronized static void fetchNewEvent(Context context, String hostAddress) {
-        MessageParser parser = new MessageParser();
-        CustomConnection connection = CustomConnection.getInstance(hostAddress);
-        try {
-            Log.d(TAG, "Background service connecting");
-            connection.connect();
-            connection.subscribe(null);
-            LeafNode node = connection.getNode();
-            List<PayloadItem> items = node.getItems(2);
-            if (items.size() > 0) {
-                for (PayloadItem item : items) {
-                    String payloadMessage = parser.retreiveXmlString(item.getPayload().toString());
-                    MessageEntry messageEntry = parser.parseContent(payloadMessage);
-                    Tasks.addEvent(context, messageEntry);
-                    NotificationUtils.alertUserAboutNewEvent(context);
+        if (ConnectionService.getState() == CustomConnection.ConnectionState.DISCONNECTED) {
+            MessageParser parser = new MessageParser();
+            CustomConnection connection = CustomConnection.getInstance(hostAddress);
+            try {
+                Log.d(TAG, "Background service connecting");
+                connection.connect();
+                connection.subscribe(null);
+                LeafNode node = connection.getNode();
+                List<PayloadItem> items = node.getItems(2);
+                if (items.size() > 0) {
+                    for (PayloadItem item : items) {
+                        String payloadMessage = parser.retreiveXmlString(item.getPayload().toString());
+                        MessageEntry messageEntry = parser.parseContent(payloadMessage);
+                        Tasks.addEvent(context, messageEntry);
+                        NotificationUtils.alertUserAboutNewEvent(context);
+                    }
                 }
+                Log.d(TAG, "Background service disconnecting");
+                connection.disconnect();
+            } catch (SmackException.ConnectionException e) {
+                Log.e(TAG, "Server not found()");
+                e.printStackTrace();
+            } catch (SASLErrorException e) {
+                Log.d(TAG, "Make sure the credentials are right and try again");
+                e.printStackTrace();
+            } catch (IOException | InterruptedException | XMPPException | SmackException e) {
+                Log.d(TAG, "Something went wrong while connecting");
+                e.printStackTrace();
+            } catch (XmlPullParserException e) {
+                Log.d(TAG, "Something went wrong while parsing the receive message");
+                e.printStackTrace();
             }
-            Log.d(TAG, "Background service disconnecting");
-            connection.disconnect();
-        } catch (SmackException.ConnectionException e) {
-            Log.e(TAG, "Server not found()");
-            e.printStackTrace();
-        } catch (SASLErrorException e) {
-            Log.d(TAG, "Make sure the credentials are right and try again");
-            e.printStackTrace();
-        } catch (IOException | InterruptedException | XMPPException | SmackException e) {
-            Log.d(TAG, "Something went wrong while connecting");
-            e.printStackTrace();
-        } catch (XmlPullParserException e) {
-            Log.d(TAG, "Something went wrong while parsing the receive message");
-            e.printStackTrace();
+        } else {
+            Log.d(TAG, "foreground service is running");
         }
     }
 }

@@ -35,13 +35,12 @@ public class ConnectionService extends Service {
     public static final String ACTION_SERVER_NOT_FOUND = "com.example.android.xmppclienttest.servernotfound";
     public static final String ACTION_SERVER_FOUND = "ACTION_SERVER_FOUND";
 
+    public static CustomConnection mConnection;
+    public static CustomConnection.ConnectionState sConnectionState;
+    public static CustomConnection.LoggedInState sLoggedInState;
 
     private static final Object LOCK = new Object();
     private static final String TAG = ConnectionService.class.getSimpleName();
-
-    public static CustomConnection.ConnectionState sConnectionState;
-    public static CustomConnection.LoggedInState sLoggedInState;
-    public static CustomConnection mConnection;
 
     private static String HOST_ADDRESS = null;
 
