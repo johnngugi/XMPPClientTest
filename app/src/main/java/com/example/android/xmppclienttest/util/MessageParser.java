@@ -105,16 +105,18 @@ public class MessageParser {
     }
 
     private void saveImageToStorage(Bitmap bitmapImage, String fileName) {
-        File file = new File(ApplicationContextProvider.getContext().getFilesDir(), fileName);
-        try {
-            FileOutputStream out = new FileOutputStream(file);
-            bitmapImage.compress(Bitmap.CompressFormat.JPEG, 85, out);
-            out.flush();
-            out.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (bitmapImage != null) {
+            File file = new File(ApplicationContextProvider.getContext().getFilesDir(), fileName);
+            try {
+                FileOutputStream out = new FileOutputStream(file);
+                bitmapImage.compress(Bitmap.CompressFormat.JPEG, 85, out);
+                out.flush();
+                out.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
